@@ -1,0 +1,15 @@
+{% extends "base.j2" %}
+
+{% block content %}
+
+<h1>Admin / Create User</h1>
+
+
+
+<form method="post" action="/admin/users/create" style="max-width: fit-content;">
+  <input name="username" required placeholder="Username" type="text" />
+  <input name="password" required placeholder="Password" type="password" />
+  <button type="submit">Create User</button>
+</form>
+
+{% endblock %}

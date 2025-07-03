@@ -1,0 +1,19 @@
+{% extends "base.j2" %}
+{% block content %}
+<h1>Spaces / {{space.name}} / Fields / Create</h1>
+
+<form method="post" action="/spaces/{{space.id}}/fields/create" style="max-width: fit-content;">
+  <input name="name" required placeholder="Name" type="text" />
+  <select name="type" required>
+    <option selected disabled>Type...</option>
+    {%for field_type in field_types%}
+    <option value="{{field_type}}">{{field_type}}</option>
+    {%endfor%}
+  </select>
+  <label><input type="checkbox" name="required">Required</label>
+  <input name="values" placeholder="Values">
+  <input name="default" placeholder="Default">
+  <button type="submit">Create Field</button>
+</form>
+
+{% endblock %}
