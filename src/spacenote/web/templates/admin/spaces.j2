@@ -1,0 +1,23 @@
+{% extends "base.j2" %}
+{% block content %}
+<h1>Admin / Spaces</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>View</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  {% for space in spaces%}
+  <tr>
+    <td>{{space.id}}</td>
+    <td>{{space.name}}</td>
+    <td><a href="/api/spaces/{{space.id}}">view</a></td>
+    <td><a href="/admin/spaces/{{space.id}}/delete" style="color: red;">delete</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Spaces</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/spaces/create">Create</a></li>
+    <li><a href="/spaces/import">Import</a></li>
+  </ul>
+</nav>
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Name</th>
+      <th>Members</th>
+      <th>Fields</th>
+      <th>Filters</th>
+      <th>Export</th>
+    </tr>
+  </thead>
+  {%for space in spaces%}
+  <tr>
+    <td>{{space.id}}</td>
+    <td>{{space.name}}</td>
+    <td><a href="/spaces/{{space.id}}/members">{{space.members | length}}</a></td>
+    <td><a href="/spaces/{{space.id}}/fields">{{space.fields | length}}</a></td>
+    <td><a href="/spaces/{{space.id}}/filters">{{space.filters | length}}</a></td>
+    <td><a href="/spaces/{{space.id}}/export">Export</a></td>
+  </tr>
+  {% endfor%}
+</table>
+{% endblock %}

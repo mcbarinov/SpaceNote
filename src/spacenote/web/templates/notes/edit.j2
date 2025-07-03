@@ -1,0 +1,203 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Edit Note #{{note.id}} / {{space.name}}</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/notes/{{space.id}}/{{note.id}}">Back to note</a></li>
+  </ul>
+</nav>
+
+<form method="post">
+  {% for field in space.fields %}
+    <div>
+      <label for="field_{{field.name}}">{{field.name}}{% if field.required %} *{% endif %}</label>
+      
+      {% set current_value = note.fields.get(field.name) %}
+      
+      {% if field.type == "string" %}
+        <input type="text" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{current_value or ''}}" {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "markdown" %}
+        <div class="markdown-editor">
+          <div class="editor-tabs">
+            <button type="button" onclick="switchToEditor('{{field.name}}')" id="editor-tab-{{field.name}}" class="active">Editor</button>
+            <button type="button" onclick="switchToPreview('{{field.name}}')" id="preview-tab-{{field.name}}">Preview</button>
+          </div>
+          <textarea name="field_{{field.name}}" id="field_{{field.name}}" class="markdown-input" 
+                    {% if field.required %}required{% endif %} 
+                    oninput="updatePreview('{{field.name}}')">{{current_value or ''}}</textarea>
+          <div id="preview_{{field.name}}" class="markdown-preview" style="display: none;"></div>
+        </div>
+      
+      {% elif field.type == "boolean" %}
+        <input type="hidden" name="field_{{field.name}}" value="false">
+        <input type="checkbox" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="true" {% if current_value %}checked{% endif %}>
+      
+      {% elif field.type == "choice" %}
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+          <option value="">Select...</option>
+          {% if field.options.get('values') %}
+            {% for option in field.options.get('values') %}
+              <option value="{{option}}" {% if current_value == option %}selected{% endif %}>{{option}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      
+      {% elif field.type == "tags" %}
+        <input type="text" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{current_value|join(', ') if current_value else ''}}" 
+               placeholder="Comma-separated tags" {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "user" %}
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+          <option value="">Select user...</option>
+          {% for member in space.members %}
+            <option value="{{member}}" {% if current_value == member %}selected{% endif %}>{{member}}</option>
+          {% endfor %}
+        </select>
+      
+      {% elif field.type == "datetime" %}
+        <input type="datetime-local" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{% if current_value %}{{current_value.strftime('%Y-%m-%dT%H:%M')}}{% endif %}" 
+               {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "int" %}
+        <input type="number" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{current_value or ''}}" 
+               {% if field.options.get('min') %}min="{{field.options.get('min')}}"{% endif %}
+               {% if field.options.get('max') %}max="{{field.options.get('max')}}"{% endif %}
+               {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "float" %}
+        <input type="number" step="any" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{current_value or ''}}" 
+               {% if field.options.get('min') %}min="{{field.options.get('min')}}"{% endif %}
+               {% if field.options.get('max') %}max="{{field.options.get('max')}}"{% endif %}
+               {% if field.required %}required{% endif %}>
+      
+      {% endif %}
+    </div>
+  {% endfor %}
+  
+  <button type="submit">Update Note</button>
+</form>
+
+<style>
+  .markdown-editor {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .editor-tabs {
+    display: flex;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+  }
+  
+  .editor-tabs button {
+    background: #f8f9fa;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    font-weight: 500;
+    color: #495057;
+    transition: all 0.2s ease;
+  }
+  
+  .editor-tabs button:hover {
+    background-color: #e9ecef;
+    color: #212529;
+  }
+  
+  .editor-tabs button.active {
+    background-color: white;
+    border-bottom-color: #007bff;
+    color: #007bff;
+    font-weight: 600;
+  }
+  
+  .markdown-input {
+    width: 100%;
+    min-height: 200px;
+    border: none;
+    padding: 1rem;
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+  }
+  
+  .markdown-preview {
+    padding: 1rem;
+    min-height: 200px;
+    background-color: white;
+    border-top: 1px solid #dee2e6;
+  }
+  
+  .markdown-preview h1, .markdown-preview h2, .markdown-preview h3,
+  .markdown-preview h4, .markdown-preview h5, .markdown-preview h6 {
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .markdown-preview p {
+    margin-bottom: 1rem;
+  }
+  
+  .markdown-preview pre {
+    background-color: #f4f4f4;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  
+  .markdown-preview blockquote {
+    border-left: 4px solid #ddd;
+    margin: 0;
+    padding-left: 1rem;
+    color: #666;
+  }
+</style>
+
+<script>
+  function switchToEditor(fieldName) {
+    document.getElementById('field_' + fieldName).style.display = 'block';
+    document.getElementById('preview_' + fieldName).style.display = 'none';
+    document.getElementById('editor-tab-' + fieldName).classList.add('active');
+    document.getElementById('preview-tab-' + fieldName).classList.remove('active');
+  }
+  
+  function switchToPreview(fieldName) {
+    updatePreview(fieldName);
+    document.getElementById('field_' + fieldName).style.display = 'none';
+    document.getElementById('preview_' + fieldName).style.display = 'block';
+    document.getElementById('editor-tab-' + fieldName).classList.remove('active');
+    document.getElementById('preview-tab-' + fieldName).classList.add('active');
+  }
+  
+  function updatePreview(fieldName) {
+    const textarea = document.getElementById('field_' + fieldName);
+    const preview = document.getElementById('preview_' + fieldName);
+    if (textarea && preview) {
+      const markdownContent = textarea.value;
+      preview.innerHTML = marked.parse(markdownContent);
+    }
+  }
+  
+  // Initialize previews on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    const markdownInputs = document.querySelectorAll('.markdown-input');
+    markdownInputs.forEach(function(input) {
+      const fieldName = input.id.replace('field_', '');
+      updatePreview(fieldName);
+    });
+  });
+</script>
+{% endblock %}

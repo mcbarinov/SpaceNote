@@ -1,0 +1,56 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Spaces / {{space.name}} / Filters</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/spaces/{{space.id}}/filters/create">Create</a></li>
+  </ul>
+</nav>
+
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Title</th>
+      <th>Description</th>
+      <th>Conditions</th>
+      <th>Sort</th>
+      <th>List Fields</th>
+      <th>Delete</th>
+    </tr>
+  </thead>
+  {% for filter in space.filters%}
+  <tr>
+    <td>{{filter.id}}</td>
+    <td>{{filter.title}}</td>
+    <td>{{filter.description | empty}}</td>
+    <td>
+      {%for condition in filter.conditions%}
+      {{condition.field}} {{condition.operator}} {{condition.value}}<br>
+      {%endfor%}
+    </td>
+    <td>
+      {%for field in filter.sort%}
+      {{field}}{%if not loop.last%}, {%endif%}
+      {%endfor%}
+    </td>
+    <td>
+      {%for field in filter.list_fields%}
+      {{field}}{%if not loop.last%}, {%endif%}
+      {%endfor%}
+    </td>
+    <td>
+      <form method="post" action="/spaces/{{space.id}}/filters/{{filter.id}}/delete" style="margin: 0;">
+        <button type="submit" onclick="return confirm('sure?')" style="background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer;">Delete</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+{% endblock %}

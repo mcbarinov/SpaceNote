@@ -1,0 +1,10 @@
+{% extends "base.j2" %}
+{% block content %}
+<h1>Notes</h1>
+
+<ul>
+  {% for space in spaces%}
+  <li><a href="/notes/{{space.id}}">{{space.name}}</a></li>
+  {%endfor%}
+</ul>
+{% endblock %}

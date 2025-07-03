@@ -1,0 +1,52 @@
+{% extends "base.j2" %}
+{% block content %}
+<h1>Spaces / {{space.name}} / Fields / Create</h1>
+
+<form method="post" action="/spaces/{{space.id}}/fields/create" style="max-width: fit-content;">
+  <input name="name" required placeholder="Name" type="text" />
+  
+  <select name="type" required id="field-type">
+    <option selected disabled>Type...</option>
+    {%for field_type in field_types%}
+    <option value="{{field_type}}">{{field_type}}</option>
+    {%endfor%}
+  </select>
+  
+  <label><input type="checkbox" name="required">Required</label>
+  
+  <!-- Show only for CHOICE type -->
+  <div id="values-group" style="display: none;">
+    <textarea name="values" placeholder="Values (one per line)" rows="4"></textarea>
+  </div>
+  
+  <input name="default" placeholder="Default" id="default-input">
+  
+  <button type="submit">Create Field</button>
+</form>
+
+<script>
+document.getElementById('field-type').addEventListener('change', function() {
+  const fieldType = this.value;
+  const valuesGroup = document.getElementById('values-group');
+  const defaultInput = document.getElementById('default-input');
+  
+  // Show/hide values field
+  if (fieldType === 'choice') {
+    valuesGroup.style.display = 'block';
+    defaultInput.placeholder = 'Default (must be one of the values)';
+  } else {
+    valuesGroup.style.display = 'none';
+    
+    // Change placeholder for default based on field type
+    if (fieldType === 'boolean') {
+      defaultInput.placeholder = 'Default (true/false)';
+    } else if (fieldType === 'tags') {
+      defaultInput.placeholder = 'Default tags (one per line)';
+    } else {
+      defaultInput.placeholder = 'Default';
+    }
+  }
+});
+</script>
+
+{% endblock %}

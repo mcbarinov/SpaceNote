@@ -1,0 +1,148 @@
+{% extends "base.j2" %}
+{% block content %}
+<h1>Spaces / {{space.name}} / Filters / Create</h1>
+
+<form method="post" action="/spaces/{{space.id}}/filters/create" style="max-width: fit-content;">
+  <input name="id" required placeholder="ID (e.g. urgent-tasks)" type="text" />
+  
+  <input name="title" required placeholder="Title (e.g. Urgent Tasks)" type="text" />
+  
+  <textarea name="description" placeholder="Description (optional)" rows="2"></textarea>
+  
+  <fieldset>
+    <legend>Filter Conditions</legend>
+    <div id="conditions-container">
+      <!-- Conditions will be added here dynamically -->
+    </div>
+    <button type="button" onclick="addCondition()">+ Add Condition</button>
+  </fieldset>
+  
+  <input name="sort" placeholder="Sort fields (comma-separated, use - for descending)" type="text">
+  <small>Example: -created_at, priority</small>
+  
+  <input name="list_fields" placeholder="Additional list fields (comma-separated)" type="text">
+  <small>Available fields: {{ space.fields | map(attribute='name') | join(', ') }}</small>
+  
+  <button type="submit">Create Filter</button>
+</form>
+
+<script>
+let conditionCount = 0;
+
+// Available fields for select options
+const availableFields = [
+  {value: 'id', label: 'ID', type: 'id'},
+  {value: 'author', label: 'Author', type: 'author'},
+  {value: 'created_at', label: 'Created At', type: 'created_at'},
+  {% for field in space.fields %}
+  {value: '{{ field.name }}', label: '{{ field.name }}', type: '{{ field.type }}'},
+  {% endfor %}
+];
+
+// Available operators for each field type (loaded from API)
+let operatorsByType = {};
+
+// Load operators mapping from API
+async function loadOperatorsMapping() {
+  try {
+    const response = await fetch('/api/filter/operators');
+    const data = await response.json();
+    
+    // Convert API response to format expected by UI
+    operatorsByType = {};
+    for (const [fieldType, operators] of Object.entries(data)) {
+      operatorsByType[fieldType] = operators.map(op => ({
+        value: op,
+        label: op
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to load operators mapping:', error);
+    // Fallback to empty object if API fails
+    operatorsByType = {};
+  }
+}
+
+function getOperatorsForFieldType(fieldType) {
+  return operatorsByType[fieldType] || [];
+}
+
+function updateOperatorDropdown(fieldSelect, operatorSelect) {
+  const selectedOption = fieldSelect.options[fieldSelect.selectedIndex];
+  const fieldType = selectedOption.getAttribute('data-type');
+  
+  // Clear existing options
+  operatorSelect.innerHTML = '<option value="">Select operator...</option>';
+  
+  if (fieldType) {
+    const operators = getOperatorsForFieldType(fieldType);
+    operators.forEach(op => {
+      const option = document.createElement('option');
+      option.value = op.value;
+      option.textContent = op.label;
+      operatorSelect.appendChild(option);
+    });
+  }
+}
+
+function addCondition() {
+  const container = document.getElementById('conditions-container');
+  const conditionDiv = document.createElement('div');
+  conditionDiv.className = 'condition-row';
+  conditionDiv.style.marginBottom = '10px';
+  conditionDiv.style.display = 'flex';
+  conditionDiv.style.gap = '10px';
+  conditionDiv.style.alignItems = 'center';
+  
+  const fieldSelectId = `field_select_${conditionCount}`;
+  const operatorSelectId = `operator_select_${conditionCount}`;
+  
+  conditionDiv.innerHTML = `
+    <select id="${fieldSelectId}" name="condition_field_${conditionCount}" required>
+      <option value="">Select field...</option>
+      ${availableFields.map(f => `<option value="${f.value}" data-type="${f.type}">${f.label}</option>`).join('')}
+    </select>
+    
+    <select id="${operatorSelectId}" name="condition_operator_${conditionCount}" required>
+      <option value="">Select operator...</option>
+    </select>
+    
+    <input name="condition_value_${conditionCount}" placeholder="" required />
+    
+    <button type="button" onclick="removeCondition(this)" style="background: #dc3545; color: white; border: none; padding: 5px 10px; cursor: pointer;">×</button>
+  `;
+  
+  container.appendChild(conditionDiv);
+  
+  // Add event listener to update operators when field changes
+  const fieldSelect = document.getElementById(fieldSelectId);
+  const operatorSelect = document.getElementById(operatorSelectId);
+  
+  fieldSelect.addEventListener('change', function() {
+    updateOperatorDropdown(fieldSelect, operatorSelect);
+  });
+  
+  conditionCount++;
+}
+
+function removeCondition(button) {
+  button.parentElement.remove();
+}
+
+// Initialize the page
+async function initializePage() {
+  await loadOperatorsMapping();
+  addCondition(); // Add first condition after operators are loaded
+}
+
+// Initialize when page loads
+initializePage();
+</script>
+
+<hr>
+
+<h2>Available Fields</h2>
+<p><strong>Built-in:</strong> id, author, created_at</p>
+<p><strong>Custom:</strong> {{ space.fields | map(attribute='name') | join(', ') }}</p>
+
+{% endblock %}

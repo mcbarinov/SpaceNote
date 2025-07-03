@@ -1,0 +1,133 @@
+{
+    "_id": "task-tracker",
+    "name": "Task Tracker",
+    "members": [
+        "alice",
+        "bob",
+        "charlie"
+    ],
+    "fields": [
+        {
+            "name": "title",
+            "type": "string",
+            "required": true,
+            "options": {},
+            "default": null
+        },
+        {
+            "name": "body",
+            "type": "markdown",
+            "required": false,
+            "options": {},
+            "default": null
+        },
+        {
+            "name": "assignee",
+            "type": "user",
+            "required": true,
+            "options": {},
+            "default": null
+        },
+        {
+            "name": "priority",
+            "type": "choice",
+            "required": false,
+            "options": {
+                "values": [
+                    "low",
+                    "medium",
+                    "high"
+                ]
+            },
+            "default": "medium"
+        },
+        {
+            "name": "open",
+            "type": "boolean",
+            "required": true,
+            "options": {},
+            "default": true
+        },
+        {
+            "name": "paused",
+            "type": "boolean",
+            "required": false,
+            "options": {},
+            "default": false
+        },
+        {
+            "name": "tags",
+            "type": "tags",
+            "required": false,
+            "options": {},
+            "default": null
+        }
+    ],
+    "list_fields": [
+        "title",
+        "assignee",
+        "open",
+        "paused",
+        "tags"
+    ],
+    "hidden_create_fields": [
+        "open",
+        "paused"
+    ],
+    "filters": [
+        {
+            "id": "active-tasks",
+            "title": "Active Tasks",
+            "description": "",
+            "conditions": [
+                {
+                    "field": "open",
+                    "operator": "eq",
+                    "value": true
+                },
+                {
+                    "field": "paused",
+                    "operator": "ne",
+                    "value": true
+                }
+            ],
+            "sort": [
+                "-created_at"
+            ],
+            "list_fields": [
+                "title",
+                "tags",
+                "assignee",
+                "priority",
+                "open"
+            ]
+        },
+        {
+            "id": "my-tasks",
+            "title": "My Tasks",
+            "description": "",
+            "conditions": [
+                {
+                    "field": "assignee",
+                    "operator": "eq",
+                    "value": "@me"
+                },
+                {
+                    "field": "open",
+                    "operator": "eq",
+                    "value": true
+                }
+            ],
+            "sort": [
+                "-created_at"
+            ],
+            "list_fields": [
+                "title",
+                "priority",
+                "tags"
+            ]
+        }
+    ],
+    "default_page_size": 20,
+    "max_page_size": 100
+}

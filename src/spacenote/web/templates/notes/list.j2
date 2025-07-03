@@ -1,0 +1,109 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Notes / {{space.name}}</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/notes/{{space.id}}/create">Create</a></li>
+    {% if space.filters %}
+    <li>
+      <form method="get" style="display: inline;">
+        <select name="filter" onchange="this.form.submit()">
+          <option value="">All Notes</option>
+          {% for filter in space.filters %}
+          <option value="{{filter.id}}" {% if current_filter==filter.id %}selected{% endif %}>
+            {{filter.title}}
+          </option>
+          {% endfor %}
+        </select>
+        {% if current_filter %}
+        <input type="hidden" name="filter" value="{{current_filter}}">
+        {% endif %}
+      </form>
+    </li>
+    {% endif %}
+    <li>
+      <form method="get" style="display: inline;">
+        <select name="page_size" onchange="this.form.submit()">
+          <option value="10" {% if pagination.page_size == 10 %}selected{% endif %}>10 per page</option>
+          <option value="20" {% if pagination.page_size == 20 %}selected{% endif %}>20 per page</option>
+          <option value="50" {% if pagination.page_size == 50 %}selected{% endif %}>50 per page</option>
+          <option value="100" {% if pagination.page_size == 100 %}selected{% endif %}>100 per page</option>
+        </select>
+        {% if current_filter %}
+        <input type="hidden" name="filter" value="{{current_filter}}">
+        {% endif %}
+      </form>
+    </li>
+  </ul>
+</nav>
+
+<div>
+  <p>Showing {{pagination.notes|length}} of {{pagination.total_count}} notes</p>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>id</th>
+      <th>💬</th>
+      {% for field_name in list_fields %}
+      <th>{{field_name}}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  {% for note in pagination.notes%}
+  <tr>
+    <td>
+      <a href="/notes/{{space.id}}/{{note.id}}">#{{note.id}}</a>
+    </td>
+    <td>
+      {% if note.comment_count > 0 %}
+      <a href="/notes/{{space.id}}/{{note.id}}#comments-section">💬{{note.comment_count}}</a>
+      {% endif %}
+    </td>
+    {% for field_name in list_fields %}
+    <td>
+      {% set field_value = note.fields.get(field_name) %}
+      {% if field_value is not none %}
+      {{field_value}}
+      {% else %}
+      -
+      {% endif %}
+    </td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+
+{% if pagination.total_pages > 1 %}
+<nav>
+  <ul style="display: flex; list-style: none; padding: 0; gap: 10px;">
+    {% if pagination.has_prev %}
+    <li>
+      <a href="?page=1{% if current_filter %}&filter={{current_filter}}{% endif %}{% if pagination.page_size != space.default_page_size %}&page_size={{pagination.page_size}}{% endif %}">First</a>
+    </li>
+    <li>
+      <a href="?page={{pagination.current_page - 1}}{% if current_filter %}&filter={{current_filter}}{% endif %}{% if pagination.page_size != space.default_page_size %}&page_size={{pagination.page_size}}{% endif %}">Previous</a>
+    </li>
+    {% endif %}
+    
+    <li>
+      <span>Page {{pagination.current_page}} of {{pagination.total_pages}}</span>
+    </li>
+    
+    {% if pagination.has_next %}
+    <li>
+      <a href="?page={{pagination.current_page + 1}}{% if current_filter %}&filter={{current_filter}}{% endif %}{% if pagination.page_size != space.default_page_size %}&page_size={{pagination.page_size}}{% endif %}">Next</a>
+    </li>
+    <li>
+      <a href="?page={{pagination.total_pages}}{% if current_filter %}&filter={{current_filter}}{% endif %}{% if pagination.page_size != space.default_page_size %}&page_size={{pagination.page_size}}{% endif %}">Last</a>
+    </li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceNote</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        .flash-message {
+            padding: 1rem;
+            border-radius: var(--pico-border-radius);
+            margin-bottom: 1rem;
+        }
+
+        .flash-message.success {
+            background-color: var(--pico-color-green-100);
+            border: 1px solid var(--pico-color-green-400);
+            color: var(--pico-color-green-700);
+        }
+
+        .flash-message.error {
+            background-color: var(--pico-color-red-100);
+            border: 1px solid var(--pico-color-red-400);
+            color: var(--pico-color-red-700);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="container">
+        <nav>
+            <ul>
+                <li><strong>SpaceNote</strong></li>
+            </ul>
+            <ul>
+                <li><a href="/notes">Notes</a></li>
+                <li><a href="/spaces">Spaces</a></li>
+                {% if current_user and current_user.admin %}
+                <li><a href="/admin">Admin</a></li>
+                {% endif %}
+                <li><a href="/profile">Profile</a></li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </nav>
+        <hr>
+    </header>
+
+    <main class="container">
+        {% if flash_messages %}
+        {% for message in flash_messages %}
+        <div class="flash-message {% if message.error %}error{% else %}success{% endif %}">
+            {{ message.message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="container">
+        <hr>
+    </footer>
+
+</body>
+
+</html>

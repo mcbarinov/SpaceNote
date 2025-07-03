@@ -1,0 +1,33 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Spaces / {{space.name}} / Members</h1>
+    </li>
+  </ul>
+</nav>
+
+<h2>Current Members</h2>
+<p>These users have full access to this space:</p>
+<ul>
+  {% for member in space.members %}
+  <li>{{ member }}</li>
+  {% endfor %}
+</ul>
+
+<hr>
+
+<h2>Update Members</h2>
+<p>Enter usernames separated by commas:</p>
+
+<form method="post" action="/spaces/{{space.id}}/members/update">
+  <input type="text" name="members" value="{{ space.members | join(', ') }}" 
+         placeholder="e.g. user1, user2, user3" style="width: 400px;">
+  <br>
+  <small>Enter exact usernames, separated by commas</small>
+  <br><br>
+  <button type="submit">Update Members</button>
+</form>
+
+{% endblock %}
