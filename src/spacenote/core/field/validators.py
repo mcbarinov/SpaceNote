@@ -1,6 +1,6 @@
 import re
 
-from spacenote.core.field.models import FieldOption, FieldType, SpaceField
+from spacenote.core.field.models import FieldOption, FieldType, FieldValue, SpaceField
 from spacenote.core.space.models import Space
 
 
@@ -62,3 +62,63 @@ def validate_field_configuration(field: SpaceField) -> None:
     elif field.type == FieldType.TAGS:
         if field.default is not None and not isinstance(field.default, list):
             raise ValueError("TAGS field default must be a list of strings")
+
+
+def validate_note_fields(space: Space, field_values: dict[str, str]) -> dict[str, FieldValue]:
+    """Validate and convert field values for a note based on space field definitions."""
+
+    validated_fields: dict[str, FieldValue] = {}
+
+    for field in space.fields:
+        field_name = field.name
+        raw_value = field_values.get(field_name, "")
+
+        # Handle required fields
+        if field.required and not raw_value:
+            raise ValueError(f"Field '{field_name}' is required")
+
+        # Convert and validate based on field type
+        validated_value: FieldValue = None
+
+        if field.type in {FieldType.STRING, FieldType.MARKDOWN}:
+            validated_value = raw_value.strip() if raw_value else None
+
+        elif field.type == FieldType.BOOLEAN:
+            # HTML checkbox sends "true" or nothing
+            validated_value = raw_value == "true"
+
+        elif field.type == FieldType.CHOICE:
+            if raw_value:
+                # Validate that the choice is in available options
+                available_choices = field.options.get(FieldOption.VALUES, [])
+                if raw_value not in available_choices:
+                    raise ValueError(f"Invalid choice '{raw_value}' for field '{field_name}'")
+                validated_value = raw_value
+            else:
+                validated_value = None
+
+        elif field.type == FieldType.TAGS:
+            if raw_value:
+                # Parse comma-separated tags
+                tags = [tag.strip() for tag in raw_value.split(",") if tag.strip()]
+                validated_value = tags if tags else None
+            else:
+                validated_value = None
+
+        elif field.type == FieldType.USER:
+            if raw_value:
+                # Validate that the user is a member of the space
+                if raw_value not in space.members:
+                    raise ValueError(f"User '{raw_value}' is not a member of space '{space.id}'")
+                validated_value = raw_value
+            else:
+                validated_value = None
+
+        elif field.type == FieldType.DATETIME:
+            validated_value = raw_value.strip() if raw_value else None
+
+        # Only include non-None values
+        if validated_value is not None:
+            validated_fields[field_name] = validated_value
+
+    return validated_fields

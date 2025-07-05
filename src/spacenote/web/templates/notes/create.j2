@@ -1,0 +1,64 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Create Note / {{space.name}}</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/notes/{{space.id}}">Back</a></li>
+  </ul>
+</nav>
+
+<form method="post">
+  {% for field in space.fields %}
+    <div>
+      <label for="field_{{field.name}}">{{field.name}}{% if field.required %} *{% endif %}</label>
+      
+      {% if field.type == "string" %}
+        <input type="text" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{field.default or ''}}" {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "markdown" %}
+        <textarea name="field_{{field.name}}" id="field_{{field.name}}" 
+                  {% if field.required %}required{% endif %}>{{field.default or ''}}</textarea>
+      
+      {% elif field.type == "boolean" %}
+        <input type="checkbox" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="true" {% if field.default %}checked{% endif %}>
+      
+      {% elif field.type == "choice" %}
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+          <option value="">Select...</option>
+          {% if field.options.get('values') %}
+            {% for option in field.options.get('values') %}
+              <option value="{{option}}" {% if field.default == option %}selected{% endif %}>{{option}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      
+      {% elif field.type == "tags" %}
+        <input type="text" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{field.default|join(', ') if field.default else ''}}" 
+               placeholder="Comma-separated tags" {% if field.required %}required{% endif %}>
+      
+      {% elif field.type == "user" %}
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+          <option value="">Select user...</option>
+          {% for member in space.members %}
+            <option value="{{member}}" {% if field.default == member %}selected{% endif %}>{{member}}</option>
+          {% endfor %}
+        </select>
+      
+      {% elif field.type == "datetime" %}
+        <input type="datetime-local" name="field_{{field.name}}" id="field_{{field.name}}" 
+               value="{{field.default or ''}}" {% if field.required %}required{% endif %}>
+      
+      {% endif %}
+    </div>
+  {% endfor %}
+  
+  <button type="submit">Create Note</button>
+</form>
+{% endblock %}

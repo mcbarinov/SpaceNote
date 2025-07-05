@@ -44,6 +44,7 @@ class SpaceService(Service):
 
         await self._collection.insert_one(Space(id=space_id, name=name, members=[member]).to_dict())
         await self.update_cache(space_id)
+        self.core.services.note.add_collection(space_id)
         return self.get_space(space_id)
 
     async def update_members(self, space_id: str, members: list[str]) -> Space:

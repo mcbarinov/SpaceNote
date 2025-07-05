@@ -2,7 +2,14 @@ from enum import StrEnum
 
 from pydantic import BaseModel
 
+# Available values for field options (e.g., choices for CHOICE field type)
 FieldOptionValue = list[str]
+
+# Possible values that can be stored in a field
+# - str: for STRING, MARKDOWN, CHOICE, USER, DATETIME fields
+# - bool: for BOOLEAN fields
+# - list[str]: for TAGS fields
+# - None: for empty/unset fields
 FieldValue = str | bool | list[str] | None
 
 

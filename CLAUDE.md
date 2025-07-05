@@ -32,6 +32,13 @@ All content must be in English:
 - We are NOT writing tests at this stage
 - Focus is on rapid iteration and exploration
 
+## Code Quality Checks
+
+After making any code changes, you MUST run linters to ensure code quality:
+- Run `just lint` to check for linting and type errors
+- Fix any issues before considering the task complete
+- This includes both ruff (linting) and mypy (type checking)
+
 ## Documentation Writing Guidelines
 
 When writing `docs/architecture.md`:
