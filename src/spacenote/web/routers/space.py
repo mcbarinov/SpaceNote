@@ -85,3 +85,10 @@ class AdminActionRouter(View):
     async def create_field(self, space_id: str, form: Annotated[CreateFieldForm, Form()]) -> RedirectResponse:
         await self.app.add_field(self.current_user, space_id, form.to_model())
         return redirect(f"/spaces/{space_id}/fields")
+
+    @router.post("/{space_id}/fields/update-list")
+    async def update_list_fields(self, space_id: str, value: Annotated[str, Form()]) -> RedirectResponse:
+        field_names = [name.strip() for name in value.strip().split(",") if name.strip()]
+        await self.app.update_list_fields(self.current_user, space_id, field_names)
+        self.render.flash("List fields updated successfully")
+        return redirect(f"/spaces/{space_id}/fields")

@@ -37,5 +37,18 @@
   {% endfor %}
 </table>
 
+<hr>
+
+<h2>List Fields</h2>
+<p>Enter field names to show in the notes list (comma-separated, order matters):</p>
+
+<form method="post" action="/spaces/{{space.id}}/fields/update-list">
+  <input type="text" name="value" value="{{ space.list_fields | join(', ') }}" 
+         placeholder="e.g. title, status, priority" style="width: 400px;">
+  <br>
+  <small>Available fields: {{ space.fields | map(attribute='name') | join(', ') }}</small>
+  <br><br>
+  <button type="submit">Update List Fields</button>
+</form>
 
 {% endblock %}

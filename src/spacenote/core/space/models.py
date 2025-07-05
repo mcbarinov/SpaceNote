@@ -9,7 +9,7 @@ class Space(MongoModel):
     name: str
     members: list[str] = []  # users who have full access to this space
     fields: list[SpaceField] = []  # Custom fields, order matters for UI display
-    list_columns: list[str] = []  # Field names to show as columns in notes list
+    list_fields: list[str] = []  # Default field names to show in notes list (can be overridden by filters)
 
     def get_field(self, field_name: str) -> SpaceField | None:
         """Get field definition by name."""

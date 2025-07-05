@@ -57,6 +57,10 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         await self._core.services.space.add_field(space_id, field)
 
+    async def update_list_fields(self, current_user: User, space_id: str, field_names: list[str]) -> None:
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        await self._core.services.space.update_list_fields(space_id, field_names)
+
     async def list_notes(self, current_user: User, space_id: str) -> list[Note]:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.list_notes(space_id)

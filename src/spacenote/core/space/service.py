@@ -68,6 +68,20 @@ class SpaceService(Service):
         await self.update_cache(space_id)
         return self.get_space(space_id)
 
+    async def update_list_fields(self, space_id: str, field_names: list[str]) -> Space:
+        """Update which fields are shown in the notes list."""
+        space = self.get_space(space_id)
+
+        # Validate that all field names exist
+        existing_field_names = {field.name for field in space.fields}
+        for field_name in field_names:
+            if field_name not in existing_field_names:
+                raise ValueError(f"Field '{field_name}' does not exist in space")
+
+        await self._collection.update_one({"_id": space_id}, {"$set": {"list_fields": field_names}})
+        await self.update_cache(space_id)
+        return self.get_space(space_id)
+
     async def update_cache(self, id: str | None = None) -> None:
         """Reload spaces cache from database."""
         if id is not None:  # update a specific space
