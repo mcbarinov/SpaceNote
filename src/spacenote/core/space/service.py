@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import Any
 
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -8,14 +8,11 @@ from spacenote.core.field.models import SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.space.models import Space
 
-if TYPE_CHECKING:
-    from typing import Any
-
 
 class SpaceService(Service):
     """Service for managing spaces with in-memory caching."""
 
-    def __init__(self, database: AsyncDatabase[dict[str, "Any"]]) -> None:
+    def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         super().__init__(database)
         self._collection = database.get_collection("spaces")
         self._spaces: dict[str, Space] = {}
@@ -80,3 +77,6 @@ class SpaceService(Service):
         else:  # update all spaces
             spaces = await Space.list_cursor(self._collection.find())
             self._spaces = {space.id: space for space in spaces}
+
+    async def on_start(self) -> None:
+        return await self.update_cache()

@@ -12,16 +12,23 @@ from spacenote.core.config import CoreConfig
 
 if TYPE_CHECKING:
     from spacenote.core.access.service import AccessService
+    from spacenote.core.note.service import NoteService
     from spacenote.core.space.service import SpaceService
     from spacenote.core.user.service import UserService
 
 
 class Service:
-    """New base class for services with direct database access."""
+    """Base class for services with direct database access."""
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         self.database = database
         self._core: Core | None = None
+
+    async def on_start(self) -> None:
+        """Initialize service on application startup."""
+
+    async def on_stop(self) -> None:
+        """Cleanup service on application shutdown."""
 
     @property
     def core(self) -> Core:
@@ -39,21 +46,25 @@ class Services:
     user: UserService
     space: SpaceService
     access: AccessService
+    note: NoteService
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         from spacenote.core.access.service import AccessService  # noqa: PLC0415
+        from spacenote.core.note.service import NoteService  # noqa: PLC0415
         from spacenote.core.space.service import SpaceService  # noqa: PLC0415
         from spacenote.core.user.service import UserService  # noqa: PLC0415
 
         self.user = UserService(database)
         self.space = SpaceService(database)
         self.access = AccessService(database)
+        self.note = NoteService(database)
 
     def set_core(self, core: Core) -> None:
         """Set core reference for all services."""
         self.user.set_core(core)
         self.space.set_core(core)
         self.access.set_core(core)
+        self.note.set_core(core)
 
 
 class Core:
@@ -80,9 +91,9 @@ class Core:
 
     async def on_start(self) -> None:
         """Initialize the application on startup."""
-        await self.services.user.update_cache()
-        await self.services.user.ensure_admin_user_exists()
-        await self.services.space.update_cache()
+        await self.services.user.on_start()
+        await self.services.space.on_start()
+        await self.services.note.on_start()
 
     async def on_stop(self) -> None:
         """Cleanup on application shutdown."""

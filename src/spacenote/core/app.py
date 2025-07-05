@@ -5,6 +5,7 @@ from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
 from spacenote.core.errors import AccessDeniedError, AdminRequiredError
 from spacenote.core.field.models import SpaceField
+from spacenote.core.note.models import Note
 from spacenote.core.space.models import Space
 from spacenote.core.user.models import User
 
@@ -55,3 +56,7 @@ class App:
     async def add_field(self, current_user: User, space_id: str, field: SpaceField) -> None:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         await self._core.services.space.add_field(space_id, field)
+
+    async def list_notes(self, current_user: User, space_id: str) -> list[Note]:
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.note.list_notes(space_id)

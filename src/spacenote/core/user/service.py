@@ -95,3 +95,8 @@ class UserService(Service):
         else:  # update all users
             users = await User.list_cursor(self._collection.find())
             self._users = {user.id: user for user in users}
+
+    async def on_start(self) -> None:
+        """Initialize service on application startup."""
+        await self.update_cache()
+        await self.ensure_admin_user_exists()

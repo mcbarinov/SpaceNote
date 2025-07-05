@@ -1,0 +1,15 @@
+{% extends "base.j2" %}
+{% block content %}
+<nav>
+  <ul>
+    <li>
+      <h1>Notes / {{space.name}}</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/notes/{{space.id}}/create">Create</a></li>
+  </ul>
+</nav>
+
+{{notes}}
+{% endblock %}
