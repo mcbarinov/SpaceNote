@@ -3,14 +3,14 @@ from enum import StrEnum
 from pydantic import BaseModel
 
 # Available values for field options (e.g., choices for CHOICE field type)
-FieldOptionValue = list[str]
+FieldOptionValueType = list[str]
 
 # Possible values that can be stored in a field
 # - str: for STRING, MARKDOWN, CHOICE, USER, DATETIME fields
 # - bool: for BOOLEAN fields
 # - list[str]: for TAGS fields
 # - None: for empty/unset fields
-FieldValue = str | bool | list[str] | None
+FieldValueType = str | bool | list[str] | None
 
 
 class FieldType(StrEnum):
@@ -34,5 +34,5 @@ class SpaceField(BaseModel):
     name: str
     type: FieldType
     required: bool = False
-    options: dict[FieldOption, FieldOptionValue] = {}
-    default: FieldValue = None
+    options: dict[FieldOption, FieldOptionValueType] = {}
+    default: FieldValueType = None

@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel
 
 from spacenote.core.field.models import FieldOption, FieldType, SpaceField
@@ -32,6 +32,13 @@ class SpacePageRouter(View):
     async def create_field(self, space_id: str) -> HTMLResponse:
         space = self.app.get_space(self.current_user, space_id)
         return await self.render.html("spaces/fields/create.j2", space=space)
+
+    @router.get("/{space_id}/export")
+    async def export(self, space_id: str) -> PlainTextResponse:
+        # Export space data as TOML (includes access verification)
+        toml_content = self.app.export_space_as_toml(self.current_user, space_id)
+
+        return PlainTextResponse(content=toml_content, media_type="text/plain")
 
 
 @cbv(router)

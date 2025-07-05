@@ -72,3 +72,10 @@ class App:
     async def get_note(self, current_user: User, space_id: str, note_id: int) -> Note | None:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.get_note(space_id, note_id)
+
+    def export_space_as_toml(self, current_user: User, space_id: str) -> str:
+        """Export space data as TOML format."""
+        # Verify user has access to the space
+        self.get_space(current_user, space_id)
+        # Export space data
+        return self._core.services.space.export_as_toml(space_id)

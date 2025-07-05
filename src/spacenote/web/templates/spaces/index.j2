@@ -18,6 +18,7 @@
       <th>Name</th>
       <th>Members</th>
       <th>Fields</th>
+      <th>Export</th>
     </tr>
   </thead>
   {%for space in spaces%}
@@ -26,6 +27,7 @@
     <td>{{space.name}}</td>
     <td><a href="/spaces/{{space.id}}/members">{{space.members | length}}</a></td>
     <td><a href="/spaces/{{space.id}}/fields">{{space.fields | length}}</a></td>
+    <td><a href="/spaces/{{space.id}}/export">Export</a></td>
   </tr>
   {% endfor%}
 </table>

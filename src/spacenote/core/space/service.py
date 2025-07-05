@@ -1,10 +1,11 @@
 from typing import Any
 
+import tomli_w
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
-from spacenote.core.field.models import SpaceField
+from spacenote.core.field.models import FieldOption, FieldOptionValueType, FieldValueType, SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.space.models import Space
 
@@ -81,6 +82,37 @@ class SpaceService(Service):
         await self._collection.update_one({"_id": space_id}, {"$set": {"list_fields": field_names}})
         await self.update_cache(space_id)
         return self.get_space(space_id)
+
+    def export_as_toml(self, space_id: str) -> str:
+        """Export space data as TOML format."""
+        space = self.get_space(space_id)
+
+        # Convert space to dict for TOML serialization
+        fields_list: list[dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType]] = []
+        space_dict = {
+            "id": space.id,
+            "name": space.name,
+            "members": space.members,
+            "list_fields": space.list_fields,
+            "fields": fields_list,
+        }
+
+        # Convert fields to dict format
+        for field in space.fields:
+            field_dict: dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType] = {
+                "name": field.name,
+                "type": field.type.value,
+                "required": field.required,
+            }
+            # Only add non-None values
+            if field.options:
+                field_dict["options"] = field.options
+            if field.default is not None:
+                field_dict["default"] = field.default
+            fields_list.append(field_dict)
+
+        # Convert to TOML format
+        return tomli_w.dumps(space_dict)
 
     async def update_cache(self, id: str | None = None) -> None:
         """Reload spaces cache from database."""

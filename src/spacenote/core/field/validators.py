@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any
 
-from spacenote.core.field.models import FieldOption, FieldType, FieldValue, SpaceField
+from spacenote.core.field.models import FieldOption, FieldType, FieldValueType, SpaceField
 from spacenote.core.space.models import Space
 
 
@@ -16,7 +16,7 @@ class FieldValidator(ABC):
         ...
 
     @abstractmethod
-    def validate_value(self, field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValueType:
         """Validate and convert a raw value to the appropriate type.
 
         Args:
@@ -65,7 +65,7 @@ class StringValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, str):
             raise ValueError("STRING field default must be a string")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
 
 
@@ -78,7 +78,7 @@ class MarkdownValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, str):
             raise ValueError("MARKDOWN field default must be a string")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
 
 
@@ -90,7 +90,7 @@ class BooleanValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, bool):
             raise ValueError("BOOLEAN field default must be a boolean value")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         # HTML forms should send "true" or "false" explicitly
         if raw_value == "true":
             return True
@@ -121,7 +121,7 @@ class ChoiceValidator(FieldValidator):
         if field.default and field.default not in values:
             raise ValueError(f"Default value '{field.default}' must be one of the available choices")
 
-    def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
             return None
 
@@ -140,7 +140,7 @@ class TagsValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, list):
             raise ValueError("TAGS field default must be a list of strings")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
             return None
 
@@ -157,7 +157,7 @@ class UserValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, str):
             raise ValueError("USER field default must be a string (user ID)")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
             return None
 
@@ -180,7 +180,7 @@ class DateTimeValidator(FieldValidator):
         if field.default is not None and not isinstance(field.default, str):
             raise ValueError("DATETIME field default must be a string")
 
-    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValue:
+    def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
 
 
@@ -220,10 +220,10 @@ def validate_field_configuration(field: SpaceField) -> None:
     get_validator(field.type).validate_configuration(field)
 
 
-def validate_note_fields(space: Space, field_values: dict[str, str]) -> dict[str, FieldValue]:
+def validate_note_fields(space: Space, field_values: dict[str, str]) -> dict[str, FieldValueType]:
     """Validate and convert field values for a note based on space field definitions."""
 
-    validated_fields: dict[str, FieldValue] = {}
+    validated_fields: dict[str, FieldValueType] = {}
 
     # Prepare validation context
     validation_context = {
