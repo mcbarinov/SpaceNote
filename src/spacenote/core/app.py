@@ -79,3 +79,7 @@ class App:
         self.get_space(current_user, space_id)
         # Export space data
         return self._core.services.space.export_as_toml(space_id)
+
+    async def import_space_from_toml(self, current_user: User, toml_content: str) -> Space:
+        """Import space from TOML format."""
+        return await self._core.services.space.import_from_toml(toml_content, current_user.id)

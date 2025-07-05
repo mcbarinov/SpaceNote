@@ -1,13 +1,13 @@
 from typing import Any
 
-import tomli_w
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
-from spacenote.core.field.models import FieldOption, FieldOptionValueType, FieldValueType, SpaceField
+from spacenote.core.field.models import SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.space.models import Space
+from spacenote.core.space.toml_operations import space_to_toml, validate_toml_import
 
 
 class SpaceService(Service):
@@ -31,6 +31,10 @@ class SpaceService(Service):
     def get_spaces(self) -> list[Space]:
         """Get all spaces from cache."""
         return list(self._spaces.values())
+
+    def get_space_ids(self) -> list[str]:
+        """Get all space IDs from cache."""
+        return list(self._spaces.keys())
 
     def get_spaces_by_member(self, member: str) -> list[Space]:
         """Get all spaces where the user is a member."""
@@ -86,33 +90,26 @@ class SpaceService(Service):
     def export_as_toml(self, space_id: str) -> str:
         """Export space data as TOML format."""
         space = self.get_space(space_id)
+        return space_to_toml(space)
 
-        # Convert space to dict for TOML serialization
-        fields_list: list[dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType]] = []
-        space_dict = {
-            "id": space.id,
-            "name": space.name,
-            "members": space.members,
-            "list_fields": space.list_fields,
-            "fields": fields_list,
-        }
+    async def import_from_toml(self, toml_content: str, member: str) -> Space:
+        """Import space from TOML format with full validation before creation."""
+        # Validate TOML and get structured data
+        existing_space_ids = self.get_space_ids()
+        import_data = validate_toml_import(toml_content, existing_space_ids)
 
-        # Convert fields to dict format
-        for field in space.fields:
-            field_dict: dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType] = {
-                "name": field.name,
-                "type": field.type.value,
-                "required": field.required,
-            }
-            # Only add non-None values
-            if field.options:
-                field_dict["options"] = field.options
-            if field.default is not None:
-                field_dict["default"] = field.default
-            fields_list.append(field_dict)
+        # Create the space
+        await self.create_space(import_data.space_id, import_data.name, member)
 
-        # Convert to TOML format
-        return tomli_w.dumps(space_dict)
+        # Add all fields
+        for field in import_data.fields:
+            await self.add_field(import_data.space_id, field)
+
+        # Update list fields if specified
+        if import_data.list_fields:
+            await self.update_list_fields(import_data.space_id, import_data.list_fields)
+
+        return self.get_space(import_data.space_id)
 
     async def update_cache(self, id: str | None = None) -> None:
         """Reload spaces cache from database."""
