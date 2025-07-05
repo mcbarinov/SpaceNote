@@ -65,9 +65,6 @@ class SpaceService(Service):
         """Add a new field to space."""
         space = self.get_space(space_id)
         validated_field = validate_new_field(space, field)
-        existing_names = {f.name for f in space.fields}
-        if validated_field.name in existing_names:
-            raise ValueError(f"Field with name '{validated_field.name}' already exists")
 
         await self._collection.update_one({"_id": space_id}, {"$push": {"fields": validated_field.model_dump()}})
         await self.update_cache(space_id)

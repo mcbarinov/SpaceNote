@@ -4,7 +4,7 @@ from fastapi import APIRouter, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
-from spacenote.core.field.models import FieldType, SpaceField
+from spacenote.core.field.models import FieldOption, FieldType, SpaceField
 from spacenote.web.class_based_view import cbv
 from spacenote.web.deps import View
 from spacenote.web.utils import redirect
@@ -44,16 +44,35 @@ class AdminActionRouter(View):
         name: str
         type: FieldType
         required: bool = False
-        values: str
-        default: str
+        values: str = ""
+        default: str = ""
 
         def to_model(self) -> SpaceField:
+            # Prepare options based on field type
+            options = {}
+
+            # For CHOICE type parse values as a list (one per line)
+            if self.type == FieldType.CHOICE and self.values:
+                values_list = [v.strip() for v in self.values.split("\n") if v.strip()]
+                if values_list:
+                    options[FieldOption.VALUES] = values_list
+
+            # Handle default value based on field type
+            default_value: str | bool | list[str] | None = None
+            if self.default:
+                if self.type == FieldType.BOOLEAN:
+                    default_value = self.default.lower() in ("true", "1", "yes")
+                elif self.type == FieldType.TAGS:
+                    default_value = [v.strip() for v in self.default.split("\n") if v.strip()]
+                else:
+                    default_value = self.default.strip()
+
             return SpaceField(
                 name=self.name.strip(),
                 type=self.type,
                 required=self.required,
-                values=self.values.strip() if self.values else None,
-                default=self.default.strip() if self.default else None,
+                options=options,
+                default=default_value,
             )
 
     @router.post("/create")
