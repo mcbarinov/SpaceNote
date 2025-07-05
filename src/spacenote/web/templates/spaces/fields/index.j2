@@ -26,9 +26,13 @@
   <tr>
     <td>{{field.name}}</td>
     <td>{{field.type}}</td>
-    <td>{{field.required}}</td>
-    <td>{{field.options}}</td>
-    <th>{{field.default}}</th>
+    <td>{{field.required | yes_no}}</td>
+    <td>
+      {%for key, value in field.options.items()%}
+      {{key}}: {{value}}<br>
+      {%endfor%}
+    </td>
+    <th>{{field.default | empty}}</th>
   </tr>
   {% endfor %}
 </table>
