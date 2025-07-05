@@ -32,20 +32,19 @@ class NoteService(Service):
 
     async def create_note_from_raw_fields(self, space_id: str, author: str, raw_fields: dict[str, str]) -> Note:
         """Create a new note in a space from raw field values (validates and converts)."""
-
-        # Get space for validation
         space = self.core.services.space.get_space(space_id)
-
-        # Validate and convert field values
-        validated_fields = validate_note_fields(space, raw_fields)
 
         # Get the next auto-increment ID for this space
         last_note = await self._collections[space_id].find({}).sort("_id", -1).limit(1).to_list(1)
         next_id = 1 if not last_note else last_note[0]["_id"] + 1
 
-        note = Note(id=next_id, author=author, created_at=datetime.now(UTC), fields=validated_fields)
-
-        # Insert the note into the collection
+        note = Note(id=next_id, author=author, created_at=datetime.now(UTC), fields=validate_note_fields(space, raw_fields))
         await self._collections[space_id].insert_one(note.to_dict())
-
         return note
+
+    async def get_note(self, space_id: str, note_id: int) -> Note:
+        """Get a single note by ID from a space."""
+        res = await self._collections[space_id].find_one({"_id": note_id})
+        if res:
+            return Note.model_validate(res)
+        raise ValueError(f"Note with ID {note_id} not found in space {space_id}")

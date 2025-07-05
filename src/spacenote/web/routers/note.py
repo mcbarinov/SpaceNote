@@ -49,3 +49,9 @@ class NoteRouter(View):
         except ValueError as e:
             self.render.flash(str(e), is_error=True)
             return redirect(f"/notes/{space_id}/create")
+
+    @router.get("/{space_id}/{note_id}")
+    async def view_note(self, space_id: str, note_id: int) -> HTMLResponse:
+        space = self.app.get_space(self.current_user, space_id)
+        note = await self.app.get_note(self.current_user, space_id, note_id)
+        return await self.render.html("notes/view.j2", space=space, note=note)

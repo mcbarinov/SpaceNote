@@ -68,3 +68,7 @@ class App:
     async def create_note_from_raw_fields(self, current_user: User, space_id: str, raw_fields: dict[str, str]) -> Note:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.create_note_from_raw_fields(space_id, current_user.id, raw_fields)
+
+    async def get_note(self, current_user: User, space_id: str, note_id: int) -> Note | None:
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.note.get_note(space_id, note_id)
