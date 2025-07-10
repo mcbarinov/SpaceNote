@@ -63,10 +63,22 @@ docker-build:
     #!/usr/bin/env bash
     set -euo pipefail
     VERSION=$(grep -E '^version = ' pyproject.toml | cut -d'"' -f2)
-    docker build -t spacenote:latest -t spacenote:$VERSION .
-    echo "✅ Built spacenote:latest and spacenote:$VERSION"
+    
+    # Create buildx builder if it doesn't exist
+    if ! docker buildx ls | grep -q "spacenote-builder"; then
+        docker buildx create --name spacenote-builder --use
+    else
+        docker buildx use spacenote-builder
+    fi
+    
+    # Build for multiple platforms
+    docker buildx build --platform linux/amd64,linux/arm64 \
+        -t spacenote:latest -t spacenote:$VERSION \
+        --load .
+    
+    echo "✅ Built spacenote:latest and spacenote:$VERSION for linux/amd64 and linux/arm64"
 
-docker-deploy: docker-build
+docker-deploy:
     #!/usr/bin/env bash
     set -euo pipefail
     VERSION=$(grep -E '^version = ' pyproject.toml | cut -d'"' -f2)
@@ -77,16 +89,21 @@ docker-deploy: docker-build
         exit 1
     fi
     
-    # Tag for GitHub Container Registry
-    docker tag spacenote:latest ghcr.io/mcbarinov/spacenote:latest
-    docker tag spacenote:$VERSION ghcr.io/mcbarinov/spacenote:$VERSION
+    # Create buildx builder if it doesn't exist
+    if ! docker buildx ls | grep -q "spacenote-builder"; then
+        docker buildx create --name spacenote-builder --use
+    else
+        docker buildx use spacenote-builder
+    fi
     
-    # Push images
-    echo "Pushing images..."
-    docker push ghcr.io/mcbarinov/spacenote:latest
-    docker push ghcr.io/mcbarinov/spacenote:$VERSION
+    # Build and push multi-platform images directly to registry
+    echo "Building and pushing multi-platform images..."
+    docker buildx build --platform linux/amd64,linux/arm64 \
+        -t ghcr.io/mcbarinov/spacenote:latest \
+        -t ghcr.io/mcbarinov/spacenote:$VERSION \
+        --push .
     
-    echo "✅ Successfully deployed to ghcr.io/mcbarinov/spacenote (latest and $VERSION)"
+    echo "✅ Successfully deployed to ghcr.io/mcbarinov/spacenote (latest and $VERSION) for linux/amd64 and linux/arm64"
     
     # Create and push Git tag
     echo "Creating Git tag v$VERSION..."

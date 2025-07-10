@@ -2,35 +2,33 @@
 
 This guide covers installing SpaceNote on Ubuntu 24.04 using Docker Compose.
 
+**Note**: This guide assumes you're installing on a dedicated VPS as the root user.
+
 ## Prerequisites
 
 ### 1. Install Docker
 
 ```bash
 # Update package index
-sudo apt update
+apt update
 
 # Install required packages
-sudo apt install -y ca-certificates curl
+apt install -y ca-certificates curl
 
 # Add Docker's official GPG key
-sudo install -m 0755 -d /etc/apt/keyrings
-sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
-sudo chmod a+r /etc/apt/keyrings/docker.asc
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
 
 # Add Docker repository
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
   $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
-  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # Install Docker
-sudo apt update
-sudo apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-
-# Add your user to docker group (optional, to run without sudo)
-sudo usermod -aG docker $USER
-newgrp docker
+apt update
+apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
 ### 2. Verify Installation
@@ -49,7 +47,29 @@ mkdir -p ~/spacenote
 cd ~/spacenote
 ```
 
-### 2. Create docker-compose.yml
+### 2. Create .env File
+
+```bash
+# MongoDB Configuration
+MONGO_INITDB_ROOT_USERNAME=spacenote
+MONGO_INITDB_ROOT_PASSWORD=changeme-use-strong-password
+MONGO_INITDB_DATABASE=spacenote
+
+# SpaceNote Configuration
+SPACENOTE_SECRET_KEY=your-secret-key-change-this-to-random-string
+SPACENOTE_HOST=0.0.0.0
+SPACENOTE_PORT=3000
+
+# Domain Configuration
+DOMAIN=your-domain.com
+```
+
+**Important**: 
+- Generate a strong secret key: `openssl rand -hex 32`
+- Use a strong password for MongoDB
+- Replace `your-domain.com` with your actual domain
+
+### 3. Create docker-compose.yml
 
 ```yaml
 services:
@@ -59,11 +79,16 @@ services:
     volumes:
       - mongodb_data:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: spacenote
-      MONGO_INITDB_ROOT_PASSWORD: changeme
-      MONGO_INITDB_DATABASE: spacenote
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
     networks:
       - spacenote-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   spacenote:
     image: ghcr.io/mcbarinov/spacenote:latest
@@ -71,14 +96,19 @@ services:
     ports:
       - "3000:3000"
     environment:
-      SPACENOTE_DATABASE_URL: mongodb://spacenote:changeme@mongodb:27017/spacenote?authSource=admin
-      SPACENOTE_SECRET_KEY: your-secret-key-change-this
-      SPACENOTE_HOST: 0.0.0.0
-      SPACENOTE_PORT: 3000
+      SPACENOTE_DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
+      SPACENOTE_SECRET_KEY: ${SPACENOTE_SECRET_KEY}
+      SPACENOTE_HOST: ${SPACENOTE_HOST}
+      SPACENOTE_PORT: ${SPACENOTE_PORT}
     depends_on:
       - mongodb
     networks:
       - spacenote-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   caddy:
     image: caddy:2
@@ -87,57 +117,30 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
-      - caddy_config:/config
+      - caddy_data:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    command: caddy reverse-proxy --from ${DOMAIN} --to spacenote:3000
     depends_on:
       - spacenote
     networks:
       - spacenote-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   mongodb_data:
   caddy_data:
-  caddy_config:
 
 networks:
   spacenote-network:
 ```
 
-### 3. Create Caddyfile
-
-For HTTPS with automatic certificates:
-
-```
-your-domain.com {
-    reverse_proxy spacenote:3000
-}
-```
-
-For local development (HTTP only):
-
-```
-:80 {
-    reverse_proxy spacenote:3000
-}
-```
-
-### 4. Create .env File
-
-```bash
-# Database
-MONGO_INITDB_ROOT_USERNAME=spacenote
-MONGO_INITDB_ROOT_PASSWORD=changeme
-MONGO_INITDB_DATABASE=spacenote
-
-# SpaceNote
-SPACENOTE_DATABASE_URL=mongodb://spacenote:changeme@mongodb:27017/spacenote?authSource=admin
-SPACENOTE_SECRET_KEY=your-secret-key-change-this-to-random-string
-SPACENOTE_HOST=0.0.0.0
-SPACENOTE_PORT=3000
-```
-
-### 5. Start Services
+### 4. Start Services
 
 ```bash
 # Start all services
@@ -210,8 +213,8 @@ docker compose up -d
 ### Common Issues
 
 1. **Port already in use**: Change ports in docker-compose.yml
-2. **Permission denied**: Make sure your user is in the docker group
-3. **MongoDB connection failed**: Check SPACENOTE_DATABASE_URL matches MongoDB credentials
+2. **Permission denied**: Check file permissions
+3. **MongoDB connection failed**: Check that MongoDB credentials in .env file are correct
 
 ## Security Recommendations
 
