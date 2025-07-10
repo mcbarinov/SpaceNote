@@ -148,21 +148,22 @@ class TaskTrackerGenerator:
 
         task_templates = self._get_task_templates()
         priorities = ["low", "medium", "high"]
+        statuses = ["new", "in_progress", "paused", "completed", "cancelled"]
+        # Weight distribution: more new/in_progress tasks, fewer completed/cancelled
+        status_weights = [0.4, 0.3, 0.1, 0.15, 0.05]
 
         for i in range(self.records):
             # Select random template and customize
             template = random.choice(task_templates)
 
             # Customize task
-            is_open = random.choice([True, True, True, False])  # 75% open
-            is_paused = random.choice([False, False, False, True]) if is_open else False
+            status = random.choices(statuses, weights=status_weights)[0]
             task_data = {
                 "title": template["title"].format(i=i + 1),
                 "body": template["body"],
                 "assignee": random.choice(self.members),
                 "priority": random.choices(priorities, weights=[0.3, 0.5, 0.2])[0],
-                "open": "true" if is_open else "false",
-                "paused": "true" if is_paused else "false",
+                "status": status,
                 "tags": ",".join(random.sample(template["tags"], k=random.randint(1, min(3, len(template["tags"]))))),
             }
 

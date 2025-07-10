@@ -42,18 +42,19 @@
             "default": "medium"
         },
         {
-            "name": "open",
-            "type": "boolean",
+            "name": "status",
+            "type": "choice",
             "required": true,
-            "options": {},
-            "default": true
-        },
-        {
-            "name": "paused",
-            "type": "boolean",
-            "required": false,
-            "options": {},
-            "default": false
+            "options": {
+                "values": [
+                    "new",
+                    "in_progress",
+                    "paused",
+                    "completed",
+                    "cancelled"
+                ]
+            },
+            "default": "new"
         },
         {
             "name": "tags",
@@ -66,13 +67,11 @@
     "list_fields": [
         "title",
         "assignee",
-        "open",
-        "paused",
+        "status",
         "tags"
     ],
     "hidden_create_fields": [
-        "open",
-        "paused"
+        "status"
     ],
     "filters": [
         {
@@ -81,14 +80,9 @@
             "description": "",
             "conditions": [
                 {
-                    "field": "open",
-                    "operator": "eq",
-                    "value": true
-                },
-                {
-                    "field": "paused",
-                    "operator": "ne",
-                    "value": true
+                    "field": "status",
+                    "operator": "in",
+                    "value": ["new", "in_progress"]
                 }
             ],
             "sort": [
@@ -99,7 +93,7 @@
                 "tags",
                 "assignee",
                 "priority",
-                "open"
+                "status"
             ]
         },
         {
@@ -113,9 +107,9 @@
                     "value": "@me"
                 },
                 {
-                    "field": "open",
-                    "operator": "eq",
-                    "value": true
+                    "field": "status",
+                    "operator": "ne",
+                    "value": "completed"
                 }
             ],
             "sort": [
@@ -124,6 +118,7 @@
             "list_fields": [
                 "title",
                 "priority",
+                "status",
                 "tags"
             ]
         }
