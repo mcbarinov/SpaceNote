@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Form
@@ -36,8 +37,10 @@ class Pages(View):
         return await self.render.html("admin/import.j2")
 
     @router.get("/spaces/{space_id}/export")
-    async def export(self, space_id: str) -> PlainTextResponse:
-        json_content = self.app.export_space_as_json(self.current_user, space_id)
+    async def export(self, space_id: str, include_content: bool = False) -> PlainTextResponse:
+        export_data = await self.app.export_space_as_json(self.current_user, space_id, include_content)
+        # Convert dict to JSON string
+        json_content = json.dumps(export_data, indent=2, ensure_ascii=False, default=str)
         return PlainTextResponse(content=json_content, media_type="application/json")
 
     @router.get("/spaces/{space_id}/delete", name="admin_delete_space", response_model=None)
@@ -72,8 +75,22 @@ class AdminActionRouter(View):
 
     @router.post("/spaces/import")
     async def import_space(self, form: Annotated[ImportSpaceForm, Form()]) -> RedirectResponse:
-        space = await self.app.import_space_from_json(self.current_user, form.json_content)
-        self.render.flash(f"Space '{space.id}' imported successfully")
+        data = json.loads(form.json_content)
+        result = await self.app.import_space_from_json(self.current_user, data)
+
+        # Build success message
+        msg = f"Space '{result.space_id}' imported successfully"
+        if result.notes_imported > 0:
+            msg += f" with {result.notes_imported} notes"
+        if result.comments_imported > 0:
+            msg += f" and {result.comments_imported} comments"
+
+        self.render.flash(msg)
+
+        # Show warnings if any
+        for warning in result.warnings:
+            self.render.flash(warning, is_error=False)
+
         return redirect("/admin/spaces")
 
     class DeleteSpaceForm(BaseModel):
