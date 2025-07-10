@@ -15,16 +15,17 @@ class MongoModel(BaseModel):
 ### Users
 - Identified by unique username
 - Passwords stored as bcrypt hashes
-- Admin users can create new accounts
+- **Single admin system**: Only the user with id "admin" has administrative privileges
 - System auto-creates default admin (`admin`/`admin`) on first startup
+- Regular users can only be created by the admin
 - **Scale**: Designed for small teams (up to 10 users)
 - **Caching**: All users kept in memory for fast access
 
 ```python
 class User(BaseModel):
-    id: str  # username
+    id: str  # username (id == "admin" indicates the administrator)
     password_hash: str  # bcrypt hashed password
-    admin: bool  # admin privileges flag
+    session_id: str | None  # current session identifier
 ```
 
 ### Spaces
@@ -186,6 +187,8 @@ await app.create_note(current_user, space_id, fields)
 - Simple model: space members have full access
 - All access permission checks in App layer
 - `AccessService` for centralized permission logic
+- Admin determination: `user.id == "admin"` (single admin system)
+- `ensure_admin()` method in AccessService enforces admin-only operations
 
 **Session Management**:
 - Sessions stored in `UserService`

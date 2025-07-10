@@ -5,7 +5,7 @@ from typing import Any
 from spacenote.core.comment.models import Comment
 from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
-from spacenote.core.errors import AccessDeniedError, AdminRequiredError
+from spacenote.core.errors import AccessDeniedError
 from spacenote.core.export.models import ImportResult
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
@@ -36,14 +36,12 @@ class App:
             await self._core.services.user.logout(user.id)
 
     def get_users(self, current_user: User) -> list[User]:
-        if not current_user.admin:
-            raise AdminRequiredError
+        self._core.services.access.ensure_admin(current_user.id)
         return self._core.services.user.get_users()
 
     async def create_user(self, current_user: User, username: str, password: str) -> User:
-        if not current_user.admin:
-            raise AdminRequiredError
-        return await self._core.services.user.create_user(username, password, admin=False)
+        self._core.services.access.ensure_admin(current_user.id)
+        return await self._core.services.user.create_user(username, password)
 
     async def create_space(self, current_user: User, space_id: str, name: str) -> Space:
         return await self._core.services.space.create_space(space_id, name, current_user.id)
@@ -53,8 +51,7 @@ class App:
 
     def get_all_spaces(self, current_user: User) -> list[Space]:
         """Get all spaces in the system."""
-        if not current_user.admin:
-            raise AdminRequiredError("Only admins can access all spaces.")
+        self._core.services.access.ensure_admin(current_user.id)
         return self._core.services.space.get_spaces()
 
     def get_space(self, current_user: User, space_id: str) -> Space:
@@ -108,14 +105,12 @@ class App:
         return await self._core.services.note.get_note(space_id, note_id)
 
     async def export_space_as_json(self, current_user: User, space_id: str, include_content: bool = False) -> dict[str, Any]:
-        if not current_user.admin:
-            raise PermissionError("Only administrators can export spaces")
+        self._core.services.access.ensure_admin(current_user.id)
         self.get_space(current_user, space_id)
         return await self._core.services.export.export_space(space_id, include_content)
 
     async def import_space_from_json(self, current_user: User, data: dict[str, Any]) -> ImportResult:
-        if not current_user.admin:
-            raise PermissionError("Only administrators can import spaces")
+        self._core.services.access.ensure_admin(current_user.id)
         return await self._core.services.export.import_space(data, current_user.id)
 
     async def create_comment(self, current_user: User, space_id: str, note_id: int, content: str) -> Comment:
@@ -135,8 +130,7 @@ class App:
 
     async def delete_space(self, current_user: User, space_id: str) -> None:
         """Delete a space and all its associated data (notes, comments). Admin only."""
-        if not current_user.admin:
-            raise AdminRequiredError("Only admins can delete spaces.")
+        self._core.services.access.ensure_admin(current_user.id)
         if not self._core.services.space.space_exists(space_id):
             raise ValueError(f"Space '{space_id}' does not exist.")
         await self._core.services.space.delete_space(space_id)
@@ -145,14 +139,12 @@ class App:
 
     async def count_space_notes(self, current_user: User, space_id: str) -> int:
         """Count the number of notes in a space. Admin only."""
-        if not current_user.admin:
-            raise AdminRequiredError("Only admins can count notes.")
+        self._core.services.access.ensure_admin(current_user.id)
         return await self._core.services.note.count_notes(space_id)
 
     async def count_space_comments(self, current_user: User, space_id: str) -> int:
         """Count the number of comments in a space. Admin only."""
-        if not current_user.admin:
-            raise AdminRequiredError("Only admins can count comments.")
+        self._core.services.access.ensure_admin(current_user.id)
         return await self._core.services.comment.count_comments(space_id)
 
     async def update_space_members(self, current_user: User, space_id: str, members: list[str]) -> None:

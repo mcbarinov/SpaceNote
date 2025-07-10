@@ -37,7 +37,7 @@
             <ul>
                 <li><a href="/notes">Notes</a></li>
                 <li><a href="/spaces">Spaces</a></li>
-                {% if current_user and current_user.admin %}
+                {% if current_user and current_user.id == "admin" %}
                 <li><a href="/admin">Admin</a></li>
                 {% endif %}
                 <li><a href="/profile">Profile</a></li>

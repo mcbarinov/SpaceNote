@@ -6,7 +6,7 @@
 
 <h2>User Information</h2>
 <p><strong>Username:</strong> {{ current_user.id }}</p>
-<p><strong>Admin:</strong> {% if current_user.admin %}Yes{% else %}No{% endif %}</p>
+<p><strong>Admin:</strong> {% if current_user.id == "admin" %}Yes{% else %}No{% endif %}</p>
 
 <hr>
 
