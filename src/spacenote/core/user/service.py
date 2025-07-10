@@ -38,11 +38,11 @@ class UserService(Service):
         """Get all users from cache."""
         return list(self._users.values())
 
-    async def create_user(self, id: str, password: str, admin: bool = False) -> User:
+    async def create_user(self, id: str, password: str) -> User:
         """Create a new user with hashed password."""
         if self.user_exists(id):
             raise ValueError(f"User with ID '{id}' already exists")
-        user_data = {"_id": id, "password_hash": hash_password(password), "admin": admin, "session_id": None}
+        user_data = {"_id": id, "password_hash": hash_password(password), "session_id": None}
         await self._collection.insert_one(User.model_validate(user_data).to_dict())
         await self.update_cache(id)
         return self.get_user(id)
@@ -61,7 +61,7 @@ class UserService(Service):
 
     async def ensure_admin_user_exists(self) -> None:
         if not self.user_exists("admin"):
-            await self.create_user("admin", "admin", admin=True)
+            await self.create_user("admin", "admin")
 
     async def login(self, username: str, password: str) -> str | None:
         """Authenticate user and return session ID."""

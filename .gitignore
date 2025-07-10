@@ -35,5 +35,8 @@ htmlcov/
 cookies.txt
 cookies-test.txt
 
+# Claude agent files
+.claude/
+
 # Other
 tmp/
