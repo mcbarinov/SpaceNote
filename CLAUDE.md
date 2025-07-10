@@ -72,6 +72,15 @@ Since we are in the prototyping phase:
 - Focus on functionality over aesthetics
 - Beauty and polish will come later - prioritize minimalism now
 
+## Error Handling Guidelines
+
+When writing web route handlers:
+- Only add try/catch blocks if error handling is critically important
+- Let exceptions bubble up to FastAPI's default error handling
+- The App class will handle business logic errors and access control
+- Services will raise appropriate exceptions that FastAPI will handle
+- Follow minimalism principle during prototyping phase
+
 ## Documentation Writing Guidelines
 
 When writing `docs/architecture.md`:
