@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from importlib.metadata import version
 
 from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
@@ -27,7 +28,7 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
         async with app_instance.lifespan():
             yield
 
-    app = FastAPI(title="SpaceNote", version="0.1.0", lifespan=lifespan)
+    app = FastAPI(title="SpaceNote", version=version("spacenote"), lifespan=lifespan)
 
     app.add_middleware(SessionMiddleware, secret_key=web_config.session_secret_key)
 

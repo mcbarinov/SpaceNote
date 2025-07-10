@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from importlib.metadata import version
 
 from fastapi import Request
 from fastapi.responses import HTMLResponse
@@ -42,7 +43,7 @@ def init_jinja() -> Environment:
     env = Environment(loader=loader, autoescape=True, enable_async=True)
 
     env.filters |= {"empty": empty, "yes_no": yes_no}
-    env.globals |= {"field_types": list(FieldType)}
+    env.globals |= {"field_types": list(FieldType), "version": version("spacenote")}
     return env
 
 
