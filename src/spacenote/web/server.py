@@ -6,7 +6,15 @@ from fastapi import FastAPI
 from starlette.middleware.sessions import SessionMiddleware
 
 from spacenote.core.app import App
+from spacenote.core.errors import AccessDeniedError, AdminRequiredError, NotFoundError
 from spacenote.web.config import WebConfig
+from spacenote.web.error_handlers import (
+    access_denied_handler,
+    admin_required_handler,
+    general_exception_handler,
+    not_found_handler,
+    value_error_handler,
+)
 from spacenote.web.render import init_jinja
 from spacenote.web.routers.admin import router as admin_router
 from spacenote.web.routers.api import router as api_router
@@ -43,5 +51,12 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     app.include_router(space_router)
     app.include_router(profile_router)
     app.include_router(api_router)
+
+    # Register error handlers
+    app.add_exception_handler(AccessDeniedError, access_denied_handler)
+    app.add_exception_handler(AdminRequiredError, admin_required_handler)
+    app.add_exception_handler(NotFoundError, not_found_handler)
+    app.add_exception_handler(ValueError, value_error_handler)
+    app.add_exception_handler(Exception, general_exception_handler)
 
     return app
