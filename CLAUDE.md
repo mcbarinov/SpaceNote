@@ -54,6 +54,24 @@ from module.x import SomeClass
 
 **Never** use late imports for convenience or performance reasons without a clear circular dependency issue.
 
+## Project Commands
+
+### Human Development
+- `just dev` - Start development server (human use only)
+
+### AI Agent Operations
+- `just agent-start` - Start AI agent
+- `just agent-stop` - Stop AI agent
+
+## Template Writing Guidelines
+
+Since we are in the prototyping phase:
+- Use Pico CSS framework
+- Minimize HTML tags - use as few as possible
+- Minimize CSS classes - use as few as possible
+- Focus on functionality over aesthetics
+- Beauty and polish will come later - prioritize minimalism now
+
 ## Documentation Writing Guidelines
 
 When writing `docs/architecture.md`:

@@ -4,4 +4,26 @@
 
 <h1>Profile</h1>
 
+<h2>User Information</h2>
+<p><strong>Username:</strong> {{ current_user.id }}</p>
+<p><strong>Admin:</strong> {% if current_user.admin %}Yes{% else %}No{% endif %}</p>
+
+<hr>
+
+<h2>Change Password</h2>
+
+<form method="post" action="/profile/change-password">
+    <label for="current_password">Current Password:</label>
+    <input type="password" id="current_password" name="current_password" required>
+    
+    <label for="new_password">New Password:</label>
+    <input type="password" id="new_password" name="new_password" required>
+    <small>Password must be at least 4 characters long</small>
+    
+    <label for="confirm_password">Confirm New Password:</label>
+    <input type="password" id="confirm_password" name="confirm_password" required>
+    
+    <button type="submit">Change Password</button>
+</form>
+
 {% endblock %}
