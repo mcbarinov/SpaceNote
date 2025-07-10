@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
 from spacenote.core.field.models import FieldOption, FieldType, SpaceField
@@ -44,21 +44,10 @@ class SpacePageRouter(View):
         space = self.app.get_space(self.current_user, space_id)
         return await self.render.html("spaces/filters/create.j2", space=space)
 
-    @router.get("/import")
-    async def import_form(self) -> HTMLResponse:
-        return await self.render.html("spaces/import.j2")
-
     @router.get("/{space_id}/members")
     async def members(self, space_id: str) -> HTMLResponse:
         space = self.app.get_space(self.current_user, space_id)
         return await self.render.html("spaces/members/index.j2", space=space)
-
-    @router.get("/{space_id}/export")
-    async def export(self, space_id: str) -> PlainTextResponse:
-        # Export space data as TOML (includes access verification)
-        toml_content = self.app.export_space_as_toml(self.current_user, space_id)
-
-        return PlainTextResponse(content=toml_content, media_type="text/plain")
 
 
 @cbv(router)
@@ -66,9 +55,6 @@ class SpaceActionRouter(View):
     class CreateSpaceForm(BaseModel):
         id: str
         name: str
-
-    class ImportSpaceForm(BaseModel):
-        toml_content: str
 
     class CreateFieldForm(BaseModel):
         name: str
@@ -110,16 +96,6 @@ class SpaceActionRouter(View):
         space = await self.app.create_space(self.current_user, form.id, form.name)
         self.render.flash(f"Space '{space.id}' created successfully")
         return redirect("/spaces")
-
-    @router.post("/import")
-    async def import_space(self, form: Annotated[ImportSpaceForm, Form()]) -> RedirectResponse:
-        try:
-            space = await self.app.import_space_from_toml(self.current_user, form.toml_content)
-            self.render.flash(f"Space '{space.id}' imported successfully")
-            return redirect("/spaces")
-        except Exception as e:
-            self.render.flash(f"Import failed: {e}")
-            return redirect("/spaces/import")
 
     @router.post("/{space_id}/fields/create")
     async def create_field(self, space_id: str, form: Annotated[CreateFieldForm, Form()]) -> RedirectResponse:

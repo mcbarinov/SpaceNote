@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from pydantic import BaseModel
 
 from spacenote.web.class_based_view import cbv
@@ -31,6 +31,15 @@ class Pages(View):
     async def create_user(self) -> HTMLResponse:
         return await self.render.html("admin/create-user.j2")
 
+    @router.get("/spaces/import")
+    async def import_form(self) -> HTMLResponse:
+        return await self.render.html("admin/import.j2")
+
+    @router.get("/spaces/{space_id}/export")
+    async def export(self, space_id: str) -> PlainTextResponse:
+        json_content = self.app.export_space_as_json(self.current_user, space_id)
+        return PlainTextResponse(content=json_content, media_type="application/json")
+
     @router.get("/spaces/{space_id}/delete", name="admin_delete_space", response_model=None)
     async def delete_space(self, space_id: str) -> HTMLResponse | RedirectResponse:
         spaces = self.app.get_all_spaces(self.current_user)
@@ -52,11 +61,20 @@ class AdminActionRouter(View):
         username: str
         password: str
 
+    class ImportSpaceForm(BaseModel):
+        json_content: str
+
     @router.post("/users/create")
     async def create_user_action(self, form: Annotated[CreateUserForm, Form()]) -> RedirectResponse:
         user = await self.app.create_user(self.current_user, form.username, form.password)
         self.render.flash(f"User '{user.id}' created successfully")
         return redirect("/admin/users")
+
+    @router.post("/spaces/import")
+    async def import_space(self, form: Annotated[ImportSpaceForm, Form()]) -> RedirectResponse:
+        space = await self.app.import_space_from_json(self.current_user, form.json_content)
+        self.render.flash(f"Space '{space.id}' imported successfully")
+        return redirect("/admin/spaces")
 
     class DeleteSpaceForm(BaseModel):
         space_name: str

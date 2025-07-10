@@ -8,8 +8,8 @@ from spacenote.core.field.models import SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.filter.models import Filter
 from spacenote.core.filter.validators import validate_filter
+from spacenote.core.space.json_operations import space_to_json, validate_json_import
 from spacenote.core.space.models import Space
-from spacenote.core.space.toml_operations import space_to_toml, validate_toml_import
 
 
 class SpaceService(Service):
@@ -133,29 +133,24 @@ class SpaceService(Service):
         await self.update_cache(space_id)
         return self.get_space(space_id)
 
-    def export_as_toml(self, space_id: str) -> str:
-        """Export space data as TOML format."""
+    def export_as_json(self, space_id: str) -> str:
+        """Export space data as JSON format."""
         space = self.get_space(space_id)
-        return space_to_toml(space)
+        return space_to_json(space)
 
-    async def import_from_toml(self, toml_content: str, member: str) -> Space:
-        """Import space from TOML format with full validation before creation."""
-        # Validate TOML and get structured data
+    async def import_from_json(self, json_content: str, member: str) -> Space:
+        """Import space from JSON format with full validation before creation."""
         existing_space_ids = self.get_space_ids()
-        import_data = validate_toml_import(toml_content, existing_space_ids)
+        import_data = validate_json_import(json_content, existing_space_ids)
 
-        # Create the space
         await self.create_space(import_data.space_id, import_data.name, member)
 
-        # Add all fields
         for field in import_data.fields:
             await self.add_field(import_data.space_id, field)
 
-        # Update list fields if specified
         if import_data.list_fields:
             await self.update_list_fields(import_data.space_id, import_data.list_fields)
 
-        # Update hidden create fields if specified
         if import_data.hidden_create_fields:
             await self.update_hidden_create_fields(import_data.space_id, import_data.hidden_create_fields)
 

@@ -105,24 +105,22 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.get_note(space_id, note_id)
 
-    def export_space_as_toml(self, current_user: User, space_id: str) -> str:
-        """Export space data as TOML format."""
-        # Verify user has access to the space
+    def export_space_as_json(self, current_user: User, space_id: str) -> str:
+        if not current_user.admin:
+            raise PermissionError("Only administrators can export spaces")
         self.get_space(current_user, space_id)
-        # Export space data
-        return self._core.services.space.export_as_toml(space_id)
+        return self._core.services.space.export_as_json(space_id)
 
-    async def import_space_from_toml(self, current_user: User, toml_content: str) -> Space:
-        """Import space from TOML format."""
-        return await self._core.services.space.import_from_toml(toml_content, current_user.id)
+    async def import_space_from_json(self, current_user: User, json_content: str) -> Space:
+        if not current_user.admin:
+            raise PermissionError("Only administrators can import spaces")
+        return await self._core.services.space.import_from_json(json_content, current_user.id)
 
     async def create_comment(self, current_user: User, space_id: str, note_id: int, content: str) -> Comment:
-        """Create a new comment for a note."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.comment.create_comment(space_id, note_id, current_user.id, content)
 
     async def get_note_comments(self, current_user: User, space_id: str, note_id: int) -> list[Comment]:
-        """Get all comments for a specific note."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.comment.get_comments_for_note(space_id, note_id)
 

@@ -1,17 +1,15 @@
-import tomllib
+import json
 from dataclasses import dataclass
 from typing import Any
 
-import tomli_w
-
-from spacenote.core.field.models import FieldOption, FieldOptionValueType, FieldType, FieldValueType, SpaceField
+from spacenote.core.field.models import FieldType, SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.space.models import Space
 
 
 @dataclass
 class ImportData:
-    """Data structure for validated TOML import data."""
+    """Data structure for validated JSON import data."""
 
     space_id: str
     name: str
@@ -20,75 +18,75 @@ class ImportData:
     hidden_create_fields: list[str]
 
 
-def space_to_toml(space: Space) -> str:
-    """Export space data as TOML format."""
+def space_to_json(space: Space) -> str:
+    """Export space data as JSON format."""
     space_dict = _space_to_dict(space)
-    return tomli_w.dumps(space_dict)
+    return json.dumps(space_dict, indent=2, ensure_ascii=False)
 
 
 def _space_to_dict(space: Space) -> dict[str, Any]:
-    """Convert space to dict for TOML serialization."""
-    fields_list: list[dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType]] = []
-    space_dict = {
+    """Convert space to dict for JSON serialization."""
+    space_dict: dict[str, Any] = {
+        "version": "1.0",
         "id": space.id,
         "name": space.name,
         "members": space.members,
         "list_fields": space.list_fields,
-        "fields": fields_list,
+        "hidden_create_fields": space.hidden_create_fields,
+        "fields": [],
     }
-
-    # Only add hidden_create_fields if not empty
-    if space.hidden_create_fields:
-        space_dict["hidden_create_fields"] = space.hidden_create_fields
 
     # Convert fields to dict format
     for field in space.fields:
-        field_dict: dict[str, str | bool | dict[FieldOption, FieldOptionValueType] | FieldValueType] = {
+        field_dict = {
             "name": field.name,
             "type": field.type.value,
             "required": field.required,
+            "options": field.options,
+            "default": field.default,
         }
-        # Only add non-None values
-        if field.options:
-            field_dict["options"] = field.options
-        if field.default is not None:
-            field_dict["default"] = field.default
-        fields_list.append(field_dict)
+        space_dict["fields"].append(field_dict)
 
     return space_dict
 
 
-def validate_toml_import(toml_content: str, existing_space_ids: list[str]) -> ImportData:
-    """Validate TOML import data and return structured ImportData."""
-    # Phase 1: Parse TOML
+def validate_json_import(json_content: str, existing_space_ids: list[str]) -> ImportData:
+    """Validate JSON import data and return structured ImportData."""
+    # Phase 1: Parse JSON
     try:
-        space_data = tomllib.loads(toml_content)
-    except tomllib.TOMLDecodeError as e:
-        raise ValueError(f"Invalid TOML format: {e}") from e
+        space_data = json.loads(json_content)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON format: {e}") from e
 
     if not isinstance(space_data, dict):
-        raise TypeError("TOML content must be a dictionary")
+        raise TypeError("JSON content must be a dictionary")
 
-    # Phase 2: Validate space data
+    # Phase 2: Validate version (optional but recommended)
+    if "version" in space_data:
+        version = space_data["version"]
+        if version != "1.0":
+            raise ValueError(f"Unsupported import format version: {version}")
+
+    # Phase 3: Validate space data
     space_id, name = _validate_space_data(space_data, existing_space_ids)
 
-    # Phase 3: Validate fields data
+    # Phase 4: Validate fields data
     validated_fields = _validate_fields_data(space_data)
 
-    # Phase 4: Validate list_fields data
+    # Phase 5: Validate list_fields data
     field_names = {field.name for field in validated_fields}
     list_fields = _validate_list_fields_data(space_data, field_names)
 
-    # Phase 5: Validate hidden_create_fields data
+    # Phase 6: Validate hidden_create_fields data
     hidden_create_fields = _validate_hidden_create_fields_data(space_data, field_names)
 
-    # Phase 6: Validate field configurations using existing validators
+    # Phase 7: Validate field configurations using existing validators
     temp_space = Space(id=space_id, name=name, members=[], fields=[], list_fields=[])
     for field in validated_fields:
         validate_new_field(temp_space, field)
         temp_space.fields.append(field)
 
-    # Phase 7: Validate that hidden fields can be hidden (have defaults if required)
+    # Phase 8: Validate that hidden fields can be hidden (have defaults if required)
     for hidden_field_name in hidden_create_fields:
         hidden_field: SpaceField | None = None
         for f in validated_fields:

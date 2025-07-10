@@ -12,7 +12,6 @@ dependencies = [
     "pymongo>=4.13.2",
     "python-dotenv>=1.1.1",
     "python-multipart>=0.0.20",
-    "tomli-w>=1.0.0",
 ]
 
 [build-system]
