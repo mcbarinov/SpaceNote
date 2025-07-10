@@ -159,3 +159,7 @@ class App:
         """Update the members list for a space. Only existing members can update."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         await self._core.services.space.update_members(space_id, members)
+
+    async def change_password(self, current_user: User, old_password: str, new_password: str) -> None:
+        """Change password for the current user."""
+        await self._core.services.user.change_password(current_user.id, old_password, new_password)
