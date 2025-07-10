@@ -56,7 +56,7 @@ MONGO_INITDB_ROOT_PASSWORD=changeme-use-strong-password
 MONGO_INITDB_DATABASE=spacenote
 
 # SpaceNote Configuration
-SPACENOTE_SECRET_KEY=your-secret-key-change-this-to-random-string
+SPACENOTE_SESSION_SECRET_KEY=your-secret-key-change-this-to-random-string
 SPACENOTE_HOST=0.0.0.0
 SPACENOTE_PORT=3000
 
@@ -97,7 +97,7 @@ services:
       - "3000:3000"
     environment:
       SPACENOTE_DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
-      SPACENOTE_SECRET_KEY: ${SPACENOTE_SECRET_KEY}
+      SPACENOTE_SESSION_SECRET_KEY: ${SPACENOTE_SESSION_SECRET_KEY}
       SPACENOTE_HOST: ${SPACENOTE_HOST}
       SPACENOTE_PORT: ${SPACENOTE_PORT}
     depends_on:
@@ -176,13 +176,28 @@ docker compose down
 
 ### Updating SpaceNote
 
+To update to the latest version:
+
 ```bash
-# Pull latest image
+# Pull the latest images
 docker compose pull
 
-# Restart services
+# Restart services with the new version
 docker compose up -d
 ```
+
+To update to a specific version:
+
+```bash
+# Edit docker-compose.yml and change the image tag from 'latest' to a specific version
+# For example: ghcr.io/mcbarinov/spacenote:0.0.2
+
+# Then pull and restart
+docker compose pull
+docker compose up -d
+```
+
+**Note**: SpaceNote follows semantic versioning. Check the [releases page](https://github.com/mcbarinov/spacenote/releases) for version history and changelog.
 
 ## Troubleshooting
 
