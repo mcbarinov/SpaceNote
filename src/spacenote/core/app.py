@@ -1,10 +1,12 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from spacenote.core.comment.models import Comment
 from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
 from spacenote.core.errors import AccessDeniedError, AdminRequiredError
+from spacenote.core.export.models import ImportResult
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
 from spacenote.core.note.models import Note, PaginationResult
@@ -105,16 +107,16 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.get_note(space_id, note_id)
 
-    def export_space_as_json(self, current_user: User, space_id: str) -> str:
+    async def export_space_as_json(self, current_user: User, space_id: str, include_content: bool = False) -> dict[str, Any]:
         if not current_user.admin:
             raise PermissionError("Only administrators can export spaces")
         self.get_space(current_user, space_id)
-        return self._core.services.space.export_as_json(space_id)
+        return await self._core.services.export.export_space(space_id, include_content)
 
-    async def import_space_from_json(self, current_user: User, json_content: str) -> Space:
+    async def import_space_from_json(self, current_user: User, data: dict[str, Any]) -> ImportResult:
         if not current_user.admin:
             raise PermissionError("Only administrators can import spaces")
-        return await self._core.services.space.import_from_json(json_content, current_user.id)
+        return await self._core.services.export.import_space(data, current_user.id)
 
     async def create_comment(self, current_user: User, space_id: str, note_id: int, content: str) -> Comment:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
