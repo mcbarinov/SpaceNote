@@ -64,12 +64,9 @@ docker-build:
     set -euo pipefail
     VERSION=$(grep -E '^version = ' pyproject.toml | cut -d'"' -f2)
     
-    # Create buildx builder if it doesn't exist
-    if ! docker buildx ls | grep -q "spacenote-builder"; then
-        docker buildx create --name spacenote-builder --use
-    else
-        docker buildx use spacenote-builder
-    fi
+    # Remove existing builder and create fresh one
+    docker buildx rm spacenote-builder 2>/dev/null || true
+    docker buildx create --name spacenote-builder --use
     
     # Build for multiple platforms
     docker buildx build --platform linux/amd64,linux/arm64 \
@@ -89,12 +86,9 @@ docker-deploy:
         exit 1
     fi
     
-    # Create buildx builder if it doesn't exist
-    if ! docker buildx ls | grep -q "spacenote-builder"; then
-        docker buildx create --name spacenote-builder --use
-    else
-        docker buildx use spacenote-builder
-    fi
+    # Remove existing builder and create fresh one
+    docker buildx rm spacenote-builder 2>/dev/null || true
+    docker buildx create --name spacenote-builder --use
     
     # Build and push multi-platform images directly to registry
     echo "Building and pushing multi-platform images..."

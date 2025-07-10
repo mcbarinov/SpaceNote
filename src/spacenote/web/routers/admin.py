@@ -98,9 +98,14 @@ class AdminActionRouter(View):
 
     @router.post("/spaces/{space_id}/delete", name="admin_delete_space_post")
     async def delete_space_action(self, space_id: str, value: Annotated[str, Form()]) -> RedirectResponse:
-        space = self.app.get_space(self.current_user, space_id)
-        if value != space.name:
-            self.render.flash("Space name does not match. Deletion cancelled.", is_error=True)
+        spaces = self.app.get_all_spaces(self.current_user)
+        space = next((s for s in spaces if s.id == space_id), None)
+        if not space:
+            self.render.flash(f"Space '{space_id}' not found", is_error=True)
+            return redirect("/admin/spaces")
+
+        if value != space.id:
+            self.render.flash("Space ID does not match. Deletion cancelled.", is_error=True)
             return redirect(f"/admin/spaces/{space_id}/delete")
 
         await self.app.delete_space(self.current_user, space_id)
