@@ -106,7 +106,8 @@ class App:
 
     async def export_space_as_json(self, current_user: User, space_id: str, include_content: bool = False) -> dict[str, Any]:
         self._core.services.access.ensure_admin(current_user.id)
-        self.get_space(current_user, space_id)
+        if not self._core.services.space.space_exists(space_id):
+            raise ValueError(f"Space '{space_id}' does not exist.")
         return await self._core.services.export.export_space(space_id, include_content)
 
     async def import_space_from_json(self, current_user: User, data: dict[str, Any]) -> ImportResult:
