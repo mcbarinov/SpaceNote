@@ -23,27 +23,25 @@ The Task Tracker space is designed for project management and task coordination.
 - **assignee** (user, required): Person responsible for the task
 - **priority** (choice, optional): Task priority level (low, medium, high)
   - Default: medium
-- **open** (boolean, required): Whether the task is still open
-  - Default: true
-- **paused** (boolean, optional): Whether the task is temporarily paused
-  - Default: false
+- **status** (choice, required): Current task state (new, in_progress, paused, completed, cancelled)
+  - Default: new
 - **tags** (tags, optional): Categorization labels
 
-**List View**: Shows title, assignee, open status, paused status, and tags
+**List View**: Shows title, assignee, status, and tags
 
-**Create Form**: Hides open and paused fields (automatically set to defaults)
+**Create Form**: Hides status field (automatically set to "new")
 
 ## Filters
 
 **Active Tasks**:
-- Shows tasks that are open and not paused
+- Shows tasks with status "new" or "in_progress"
 - Sorted by creation date (newest first)
-- Displays: title, tags, assignee, priority, open status
+- Displays: title, tags, assignee, priority, status
 
 **My Tasks**:
-- Shows open tasks assigned to the current user
+- Shows tasks assigned to the current user that are not completed
 - Sorted by creation date (newest first)
-- Displays: title, priority, tags
+- Displays: title, priority, status, tags
 
 ## Example Records
 
@@ -54,8 +52,7 @@ The Task Tracker space is designed for project management and task coordination.
   "body": "The email validation on the login page is not working correctly. Users can submit invalid email addresses.\n\n**Steps to reproduce:**\n1. Go to login page\n2. Enter invalid email\n3. Click submit\n\n**Expected:** Error message should appear\n**Actual:** Form submits successfully",
   "assignee": "bob",
   "priority": "high",
-  "open": true,
-  "paused": false,
+  "status": "new",
   "tags": ["bug", "frontend", "urgent"]
 }
 ```
@@ -67,8 +64,7 @@ The Task Tracker space is designed for project management and task coordination.
   "body": "Add a settings page where users can:\n- Update their profile information\n- Change password\n- Configure notification preferences\n- Upload avatar image",
   "assignee": "charlie",
   "priority": "medium",
-  "open": true,
-  "paused": false,
+  "status": "in_progress",
   "tags": ["feature", "backend", "frontend"]
 }
 ```
@@ -80,8 +76,7 @@ The Task Tracker space is designed for project management and task coordination.
   "body": "Review and update the API documentation to reflect recent changes in the authentication endpoints.",
   "assignee": "alice",
   "priority": "low",
-  "open": false,
-  "paused": false,
+  "status": "completed",
   "tags": ["documentation", "api"]
 }
 ```
@@ -93,8 +88,7 @@ The Task Tracker space is designed for project management and task coordination.
   "body": "Evaluate different authentication libraries for the new security requirements:\n- OAuth 2.0 support\n- Multi-factor authentication\n- Session management\n- Integration difficulty",
   "assignee": "bob",
   "priority": "medium",
-  "open": true,
-  "paused": true,
+  "status": "paused",
   "tags": ["research", "security", "backend"]
 }
 ```
