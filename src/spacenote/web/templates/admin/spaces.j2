@@ -1,6 +1,15 @@
 {% extends "base.j2" %}
 {% block content %}
-<h1>Admin / Spaces</h1>
+<nav>
+  <ul>
+    <li>
+      <h1>Admin / Spaces</h1>
+    </li>
+  </ul>
+  <ul>
+    <li><a href="/admin/spaces/import">Import</a></li>
+  </ul>
+</nav>
 
 <table>
   <thead>
@@ -8,6 +17,7 @@
       <th>ID</th>
       <th>Name</th>
       <th>View</th>
+      <th>Export</th>
       <th>Delete</th>
     </tr>
   </thead>
@@ -16,6 +26,7 @@
     <td>{{space.id}}</td>
     <td>{{space.name}}</td>
     <td><a href="/api/spaces/{{space.id}}">view</a></td>
+    <td><a href="/admin/spaces/{{space.id}}/export">Export</a></td>
     <td><a href="/admin/spaces/{{space.id}}/delete" style="color: red;">delete</a></td>
   </tr>
   {% endfor %}

@@ -24,6 +24,10 @@ All content must be in English:
 - Git commit messages
 - Any other written content
 
+## Communication Language
+
+**ALWAYS communicate in English only**, regardless of the language used by the user. All responses must be in English.
+
 ## Current Project State
 
 **Phase**: Prototyping
@@ -38,6 +42,32 @@ After making any code changes, you MUST run linters to ensure code quality:
 - Run `just lint` to check for linting and type errors
 - Fix any issues before considering the task complete
 - This includes both ruff (linting) and mypy (type checking)
+
+## Comment Guidelines
+
+**DO NOT write meaningless comments that simply restate what the code does.**
+
+Bad examples:
+```python
+# Verify user is admin
+if not current_user.admin:
+    raise PermissionError("Only administrators can export spaces")
+# Export space data
+return self._core.services.space.export_as_json(space_id)
+```
+
+**Only write comments when they provide additional context or explain WHY something is done:**
+
+Good examples:
+```python
+# Late import to avoid circular dependency with module X
+from module.x import SomeClass
+
+# Using exponential backoff to handle rate limits
+time.sleep(2 ** attempt)
+```
+
+**The code should be self-explanatory. Comments should explain business logic, not implementation details.**
 
 ## Import Guidelines
 
