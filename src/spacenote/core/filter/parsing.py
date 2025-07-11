@@ -4,9 +4,14 @@ from spacenote.core.field.models import FieldValueType
 from spacenote.core.filter.models import Filter, FilterCondition, FilterOperator
 
 
-def parse_filter_value(value_str: str) -> FieldValueType:
-    """Parse string value to appropriate type."""
+def parse_filter_value(value_str: str, operator: FilterOperator) -> FieldValueType:
+    """Parse string value to appropriate type based on operator."""
     value = value_str.strip()
+
+    # For IN and ALL operators, split by newlines to create array
+    if operator in (FilterOperator.IN, FilterOperator.ALL):
+        lines = [line.strip() for line in value.split("\n") if line.strip()]
+        return lines if lines else [value]  # fallback to single value if no lines
 
     # Try boolean
     if value.lower() in ("true", "false"):
@@ -30,8 +35,9 @@ def parse_filter_conditions(raw_data: dict[str, Any]) -> list[FilterCondition]:
             try:
                 # Convert to string if needed
                 value_str = str(value) if not isinstance(value, str) else value
-                parsed_value = parse_filter_value(value_str)
-                conditions.append(FilterCondition(field=str(field), operator=FilterOperator(str(operator)), value=parsed_value))
+                operator_enum = FilterOperator(str(operator))
+                parsed_value = parse_filter_value(value_str, operator_enum)
+                conditions.append(FilterCondition(field=str(field), operator=operator_enum, value=parsed_value))
             except (KeyError, ValueError):
                 continue  # Skip invalid conditions
         i += 1

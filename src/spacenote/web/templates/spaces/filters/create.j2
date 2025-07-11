@@ -67,7 +67,7 @@ function getOperatorsForFieldType(fieldType) {
   return operatorsByType[fieldType] || [];
 }
 
-function updateOperatorDropdown(fieldSelect, operatorSelect) {
+function updateOperatorDropdown(fieldSelect, operatorSelect, conditionIndex) {
   const selectedOption = fieldSelect.options[fieldSelect.selectedIndex];
   const fieldType = selectedOption.getAttribute('data-type');
   
@@ -82,6 +82,45 @@ function updateOperatorDropdown(fieldSelect, operatorSelect) {
       option.textContent = op.label;
       operatorSelect.appendChild(option);
     });
+  }
+}
+
+function updateValueInput(operatorSelect, conditionIndex) {
+  console.log('updateValueInput called', operatorSelect.value, conditionIndex);
+  const selectedOperator = operatorSelect.value;
+  const valueInputName = `condition_value_${conditionIndex}`;
+  const currentInput = document.querySelector(`[name="${valueInputName}"]`);
+  
+  console.log('Looking for input with name:', valueInputName, 'found:', currentInput);
+  
+  if (!currentInput) return;
+  
+  // Check if operator requires multiple values (IN, ALL)
+  if (selectedOperator === 'in' || selectedOperator === 'all') {
+    console.log('Switching to textarea for operator:', selectedOperator);
+    // Replace input with textarea for multiple values
+    if (currentInput.tagName.toLowerCase() !== 'textarea') {
+      const textarea = document.createElement('textarea');
+      textarea.name = valueInputName;
+      textarea.placeholder = 'Enter values (one per line)';
+      textarea.rows = 3;
+      textarea.required = true;
+      textarea.value = currentInput.value;
+      currentInput.parentNode.replaceChild(textarea, currentInput);
+      console.log('Replaced input with textarea');
+    }
+  } else {
+    console.log('Switching to input for operator:', selectedOperator);
+    // Replace textarea with input for single values
+    if (currentInput.tagName.toLowerCase() !== 'input') {
+      const input = document.createElement('input');
+      input.name = valueInputName;
+      input.placeholder = 'Enter value';
+      input.required = true;
+      input.value = currentInput.value;
+      currentInput.parentNode.replaceChild(input, currentInput);
+      console.log('Replaced textarea with input');
+    }
   }
 }
 
@@ -114,12 +153,18 @@ function addCondition() {
   
   container.appendChild(conditionDiv);
   
-  // Add event listener to update operators when field changes
+  // Add event listeners
   const fieldSelect = document.getElementById(fieldSelectId);
   const operatorSelect = document.getElementById(operatorSelectId);
+  const currentConditionIndex = conditionCount;
   
   fieldSelect.addEventListener('change', function() {
-    updateOperatorDropdown(fieldSelect, operatorSelect);
+    updateOperatorDropdown(fieldSelect, operatorSelect, currentConditionIndex);
+  });
+  
+  // Add event listener directly to operator select for value input switching
+  operatorSelect.addEventListener('change', function() {
+    updateValueInput(operatorSelect, currentConditionIndex);
   });
   
   conditionCount++;
