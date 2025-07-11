@@ -2,6 +2,9 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
+from fastapi import UploadFile
+
+from spacenote.core.attachment.models import Attachment
 from spacenote.core.comment.models import Comment
 from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
@@ -137,6 +140,7 @@ class App:
         await self._core.services.space.delete_space(space_id)
         await self._core.services.note.drop_collection(space_id)
         await self._core.services.comment.drop_collection(space_id)
+        await self._core.services.attachment.drop_collection(space_id)
 
     async def count_space_notes(self, current_user: User, space_id: str) -> int:
         """Count the number of notes in a space. Admin only."""
@@ -156,3 +160,13 @@ class App:
     async def change_password(self, current_user: User, old_password: str, new_password: str) -> None:
         """Change password for the current user."""
         await self._core.services.user.change_password(current_user.id, old_password, new_password)
+
+    async def upload_attachment(self, current_user: User, space_id: str, file: UploadFile) -> Attachment:
+        """Upload a file attachment to a space."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.upload_file(space_id, file, current_user.id)
+
+    async def get_space_attachments(self, current_user: User, space_id: str, unassigned_only: bool = True) -> list[Attachment]:
+        """Get attachments for a space."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.get_space_attachments(space_id, unassigned_only)

@@ -14,6 +14,9 @@ class CoreConfig(BaseSettings):
     # Database
     database_url: str = "mongodb://localhost:27017/spacenote"
 
+    # File Storage
+    attachments_path: str = "./attachments"
+
     # Logging
     debug: bool = False
 

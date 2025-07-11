@@ -38,5 +38,8 @@ cookies-test.txt
 # Claude agent files
 .claude/
 
+# File uploads
+attachments/
+
 # Other
 tmp/

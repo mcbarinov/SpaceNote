@@ -18,6 +18,7 @@ from spacenote.web.error_handlers import (
 from spacenote.web.render import init_jinja
 from spacenote.web.routers.admin import router as admin_router
 from spacenote.web.routers.api import router as api_router
+from spacenote.web.routers.attachment import router as attachment_router
 from spacenote.web.routers.auth import router as auth_router
 from spacenote.web.routers.note import router as note_router
 from spacenote.web.routers.profile import router as profile_router
@@ -49,6 +50,7 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     app.include_router(admin_router)
     app.include_router(note_router)
     app.include_router(space_router)
+    app.include_router(attachment_router)
     app.include_router(profile_router)
     app.include_router(api_router)
 
