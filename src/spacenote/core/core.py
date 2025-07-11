@@ -13,6 +13,7 @@ from spacenote.core.logging import setup_logging
 
 if TYPE_CHECKING:
     from spacenote.core.access.service import AccessService
+    from spacenote.core.attachment.service import AttachmentService
     from spacenote.core.comment.service import CommentService
     from spacenote.core.export.service import ExportService
     from spacenote.core.note.service import NoteService
@@ -52,9 +53,11 @@ class Services:
     access: AccessService
     note: NoteService
     export: ExportService
+    attachment: AttachmentService
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         from spacenote.core.access.service import AccessService  # noqa: PLC0415
+        from spacenote.core.attachment.service import AttachmentService  # noqa: PLC0415
         from spacenote.core.comment.service import CommentService  # noqa: PLC0415
         from spacenote.core.export.service import ExportService  # noqa: PLC0415
         from spacenote.core.note.service import NoteService  # noqa: PLC0415
@@ -67,6 +70,7 @@ class Services:
         self.access = AccessService(database)
         self.note = NoteService(database)
         self.export = ExportService(database)
+        self.attachment = AttachmentService(database)
 
     def set_core(self, core: Core) -> None:
         """Set core reference for all services."""
@@ -76,11 +80,13 @@ class Services:
         self.access.set_core(core)
         self.note.set_core(core)
         self.export.set_core(core)
+        self.attachment.set_core(core)
 
 
 class Core:
     """Core application class that manages the lifecycle and database."""
 
+    config: CoreConfig
     mongo_client: AsyncMongoClient[dict[str, Any]]
     database: AsyncDatabase[dict[str, Any]]
     services: Services
@@ -90,6 +96,7 @@ class Core:
         # Setup logging first
         setup_logging(config)
 
+        self.config = config
         self.mongo_client = AsyncMongoClient(config.database_url)
         self.database = self.mongo_client.get_database(urlparse(config.database_url).path[1:])
         self.services = Services(self.database)
@@ -109,6 +116,7 @@ class Core:
         await self.services.space.on_start()
         await self.services.comment.on_start()
         await self.services.note.on_start()
+        await self.services.attachment.on_start()
 
     async def on_stop(self) -> None:
         """Cleanup on application shutdown."""

@@ -61,6 +61,7 @@ class SpaceService(Service):
         await self.update_cache(space_id)
         self.core.services.note.add_collection(space_id)
         self.core.services.comment.add_collection(space_id)
+        self.core.services.attachment.add_collection(space_id)
 
         log.debug("space_created", name=name)
         return self.get_space(space_id)
