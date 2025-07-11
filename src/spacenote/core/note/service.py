@@ -1,6 +1,7 @@
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
@@ -9,6 +10,8 @@ from spacenote.core.field.validators import validate_note_fields
 from spacenote.core.filter.mongo import build_mongodb_query, build_sort_spec
 from spacenote.core.note.models import Note, PaginationResult
 from spacenote.core.user.models import User
+
+logger = structlog.get_logger(__name__)
 
 
 class NoteService(Service):
@@ -26,6 +29,7 @@ class NoteService(Service):
         """Initialize service on application startup."""
         for space in self.core.services.space.get_spaces():
             self._collections[space.id] = self.database.get_collection(f"{space.id}_notes")
+        logger.debug("note_service_started", collections_count=len(self._collections))
 
     async def list_notes(
         self, space_id: str, filter_id: str | None = None, current_user: User | None = None, page: int = 1, page_size: int = 20
@@ -73,6 +77,9 @@ class NoteService(Service):
 
     async def create_note_from_raw_fields(self, space_id: str, author: str, raw_fields: dict[str, str]) -> Note:
         """Create a new note in a space from raw field values (validates and converts)."""
+        log = logger.bind(space_id=space_id, author=author, action="create_note")
+        log.debug("creating_note")
+
         space = self.core.services.space.get_space(space_id)
 
         # Get the next auto-increment ID for this space
@@ -86,6 +93,8 @@ class NoteService(Service):
             fields=validate_note_fields(space, raw_fields, skip_missing=True),
         )
         await self._collections[space_id].insert_one(note.to_dict())
+
+        log.debug("note_created", note_id=note.id)
         return note
 
     async def get_note(self, space_id: str, note_id: int) -> Note:
@@ -103,11 +112,16 @@ class NoteService(Service):
 
     async def update_note_from_raw_fields(self, space_id: str, note_id: int, raw_fields: dict[str, str]) -> Note:
         """Update an existing note in a space from raw field values (validates and converts)."""
+        log = logger.bind(space_id=space_id, note_id=note_id, action="update_note")
+        log.debug("updating_note")
+
         space = self.core.services.space.get_space(space_id)
         validated_fields = validate_note_fields(space, raw_fields, skip_missing=False)
         await self._collections[space_id].update_one(
             {"_id": note_id}, {"$set": {"fields": validated_fields, "edited_at": datetime.now(UTC)}}
         )
+
+        log.debug("note_updated")
         return await self.get_note(space_id, note_id)
 
     async def drop_collection(self, space_id: str) -> None:

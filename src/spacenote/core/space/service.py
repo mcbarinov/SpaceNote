@@ -1,5 +1,6 @@
 from typing import Any
 
+import structlog
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
@@ -10,6 +11,8 @@ from spacenote.core.filter.models import Filter
 from spacenote.core.filter.validators import validate_filter
 from spacenote.core.space.json_operations import space_to_json, validate_json_import
 from spacenote.core.space.models import Space
+
+logger = structlog.get_logger(__name__)
 
 
 class SpaceService(Service):
@@ -44,15 +47,22 @@ class SpaceService(Service):
 
     async def create_space(self, space_id: str, name: str, member: str) -> Space:
         """Create a new space with validation."""
+        log = logger.bind(space_id=space_id, member=member, action="create_space")
+        log.debug("creating_space")
+
         if not space_id or not space_id.replace("-", "").replace("_", "").isalnum():
+            log.warning("invalid_space_id")
             raise ValueError("Space ID must be a valid slug (alphanumeric with hyphens/underscores)")
         if self.space_exists(space_id):
+            log.warning("space_already_exists")
             raise ValueError(f"Space with ID '{space_id}' already exists")
 
         await self._collection.insert_one(Space(id=space_id, name=name, members=[member]).to_dict())
         await self.update_cache(space_id)
         self.core.services.note.add_collection(space_id)
         self.core.services.comment.add_collection(space_id)
+
+        log.debug("space_created", name=name)
         return self.get_space(space_id)
 
     async def update_members(self, space_id: str, members: list[str]) -> Space:
@@ -158,11 +168,17 @@ class SpaceService(Service):
 
     async def delete_space(self, space_id: str) -> None:
         """Delete a space and update cache."""
+        log = logger.bind(space_id=space_id, action="delete_space")
+
         if not self.space_exists(space_id):
+            log.warning("space_not_found")
             raise NotFoundError(f"Space '{space_id}' not found")
+
         await self._collection.delete_one({"_id": space_id})
         del self._spaces[space_id]
         # Note and Comment collections cleanup will be handled by the App layer
+
+        log.debug("space_deleted")
 
     async def update_cache(self, id: str | None = None) -> None:
         """Reload spaces cache from database."""
@@ -176,4 +192,5 @@ class SpaceService(Service):
             self._spaces = {space.id: space for space in spaces}
 
     async def on_start(self) -> None:
-        return await self.update_cache()
+        await self.update_cache()
+        logger.debug("space_service_started", space_count=len(self._spaces))

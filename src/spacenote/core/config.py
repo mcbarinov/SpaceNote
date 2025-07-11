@@ -14,6 +14,9 @@ class CoreConfig(BaseSettings):
     # Database
     database_url: str = "mongodb://localhost:27017/spacenote"
 
+    # Logging
+    debug: bool = False
+
     model_config = {
         "env_file": ".env",
         "env_prefix": "SPACENOTE_",
