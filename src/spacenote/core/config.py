@@ -12,16 +12,16 @@ class CoreConfig(BaseSettings):
     """Configuration for core SpaceNote functionality."""
 
     # Database
-    database_url: str = "mongodb://localhost:27017/spacenote"
+    database_url: str
 
     # File Storage
-    attachments_path: str = "./attachments"
+    attachments_path: str
 
     # Logging
-    debug: bool = False
+    debug: bool
 
     # Web Interface
-    base_url: str = "http://localhost:8000"
+    base_url: str
 
     model_config = {
         "env_file": ".env",

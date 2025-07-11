@@ -35,6 +35,9 @@
                 <li><strong>SpaceNote</strong></li>
             </ul>
             <ul>
+                {% if current_user %}
+                <li><span style="color: var(--pico-color-muted);">{{ current_user.id }}</span></li>
+                {% endif %}
                 <li><a href="/notes">Notes</a></li>
                 <li><a href="/spaces">Spaces</a></li>
                 {% if current_user and current_user.id == "admin" %}
