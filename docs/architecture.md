@@ -130,6 +130,70 @@ class Comment(MongoModel):
     parent_id: str | None = None  # For nested comments
 ```
 
+### Attachments
+Attachments allow users to upload and associate files with notes within a space. Files can be uploaded to a space first and then assigned to specific notes, providing flexibility in file management.
+
+```python
+class Attachment(MongoModel):
+    id: int  # Auto-incremented within each space
+    space_id: str  # Space this attachment belongs to
+    filename: str  # Original filename (e.g., "report.pdf")
+    content_type: str  # MIME type (e.g., "application/pdf", "image/jpeg")
+    size: int  # File size in bytes
+    path: str  # Relative path from attachments root
+    author: str  # User who uploaded the file
+    created_at: datetime  # When file was uploaded
+    note_id: int | None = None  # Attached note (None = unassigned)
+```
+
+**File Storage Strategy**
+
+Configuration: Attachments root directory specified in `CoreConfig.attachments_path`
+
+File System Structure:
+```
+{attachments_path}/
+  /{space_id}/
+    /__unassigned__/           # Files with note_id = None
+      filename__{id}.ext
+    /{note_id}/                # Files assigned to specific notes
+      filename__{id}.ext
+```
+
+File Naming Convention:
+- **Format**: `{original_filename}__{attachment_id}.{original_extension}`
+- **Example**: `report__42.pdf` (where 42 is the auto-incremented attachment ID)
+- **Benefits**: Human-readable + guaranteed uniqueness + easy DB correlation
+
+**Workflow**
+
+Stage 1: Upload to Space
+1. User uploads file to space
+2. File saved to `/{space_id}/__unassigned__/` directory
+3. Attachment record created with `note_id = null`
+4. File appears in space's unassigned attachments list
+
+Stage 2: Assign to Note
+1. When creating/editing note with ATTACHMENT field
+2. User selects from available unassigned attachments
+3. File moved from `__unassigned__/` to `/{note_id}/` directory
+4. Attachment record updated with `note_id`
+5. File now linked to note and displayed in note view
+
+**Database Collections**
+
+Per-Space Collections:
+- `{space_id}_attachments` - attachment metadata for each space
+- Follows existing pattern of space-isolated collections
+- Auto-incremented IDs within each space (like notes and comments)
+
+**Access Control**
+
+- Upload/Download: Space membership required
+- Assign/Unassign: Space membership required
+- Delete: Space membership required
+- Admin: Full access to all attachments
+
 ## Code Organization
 
 ### Project Structure
