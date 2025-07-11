@@ -194,6 +194,80 @@ Per-Space Collections:
 - Delete: Space membership required
 - Admin: Full access to all attachments
 
+### Telegram Notifications
+Telegram notifications enable automatic updates to Telegram channels when events occur in spaces. This allows users to stay informed about space activity without constantly checking the web interface.
+
+**Core Models:**
+
+```python
+class TelegramBot(MongoModel):
+    id: str = Field(alias="_id")  # Bot name/identifier (e.g., "spacenote-bot")
+    token: str  # Telegram Bot API token
+    created_at: datetime
+```
+
+```python
+class TelegramConfig(BaseModel):
+    enabled: bool = False
+    bot_id: str  # Reference to TelegramBot.id
+    channel_id: str  # Telegram channel ID (e.g., "@spacenote_updates" or "-1001234567890")
+    templates: Templates
+
+    class Templates(BaseModel):
+        new_note: str = "📝 New note in {{space.name}}:\n{{note.title}}\nAuthor: {{note.author}}"
+        field_update: str = "✏️ Note updated in {{space.name}}:\n{{note.title}}\nChanges: {{changes}}"
+        comment: str = "💬 New comment in {{space.name}}:\n{{note.title}}\nBy {{comment.author}}: {{comment.content}}"
+```
+
+**Space Integration:**
+
+```python
+class Space(MongoModel):
+    # ... existing fields ...
+    telegram: TelegramConfig | None = None  # Optional Telegram configuration
+```
+
+**Database Collections:**
+
+- `telegram_bots` - Store Telegram bot configurations (admin-only)
+- `spaces` - Updated with optional `telegram` field
+
+**Event Triggers:**
+
+Notifications are automatically sent when:
+1. **New Note Created**: When a note is created in a space with Telegram enabled
+2. **Note Fields Updated**: When note fields are modified in a space with Telegram enabled  
+3. **New Comment Added**: When a comment is added to a note in a space with Telegram enabled
+
+**Template Variables:**
+
+Jinja2 templates have access to:
+```python
+{
+    "space": space_object,      # Space information
+    "note": note_object,        # Note information
+    "comment": comment_object,  # Comment information (for comment events)
+    "changes": field_changes,   # Field changes (for update events)
+    "author": user_object,      # User who triggered the event
+    "url": note_url            # Link back to the note
+}
+```
+
+**Access Control:**
+
+- **Bot Management**: Admin-only (only the admin user can create/delete bots)
+- **Space Configuration**: Space members can configure Telegram settings for their spaces
+- **Notifications**: Sent automatically when events occur in spaces with Telegram enabled
+
+**Service Implementation:**
+
+The `TelegramService` handles:
+- Bot management (CRUD operations)
+- Message sending to channels
+- Template rendering with Jinja2
+- Event integration with existing services
+- Rate limiting and error handling
+
 ## Code Organization
 
 ### Project Structure
