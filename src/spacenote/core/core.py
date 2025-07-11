@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from spacenote.core.export.service import ExportService
     from spacenote.core.note.service import NoteService
     from spacenote.core.space.service import SpaceService
+    from spacenote.core.telegram.service import TelegramService
     from spacenote.core.user.service import UserService
 
 
@@ -54,6 +55,7 @@ class Services:
     note: NoteService
     export: ExportService
     attachment: AttachmentService
+    telegram: TelegramService
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         from spacenote.core.access.service import AccessService  # noqa: PLC0415
@@ -62,6 +64,7 @@ class Services:
         from spacenote.core.export.service import ExportService  # noqa: PLC0415
         from spacenote.core.note.service import NoteService  # noqa: PLC0415
         from spacenote.core.space.service import SpaceService  # noqa: PLC0415
+        from spacenote.core.telegram.service import TelegramService  # noqa: PLC0415
         from spacenote.core.user.service import UserService  # noqa: PLC0415
 
         self.user = UserService(database)
@@ -71,6 +74,7 @@ class Services:
         self.note = NoteService(database)
         self.export = ExportService(database)
         self.attachment = AttachmentService(database)
+        self.telegram = TelegramService(database)
 
     def set_core(self, core: Core) -> None:
         """Set core reference for all services."""
@@ -81,6 +85,7 @@ class Services:
         self.note.set_core(core)
         self.export.set_core(core)
         self.attachment.set_core(core)
+        self.telegram.set_core(core)
 
 
 class Core:

@@ -3,6 +3,7 @@ from pydantic import Field
 from spacenote.core.db import MongoModel
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
+from spacenote.core.telegram.models import TelegramConfig
 
 
 class Space(MongoModel):
@@ -15,6 +16,7 @@ class Space(MongoModel):
     filters: list[Filter] = []  # Filter definitions for this space
     default_page_size: int = 20  # Default number of records per page
     max_page_size: int = 100  # Maximum allowed page size
+    telegram: TelegramConfig | None = None  # Optional Telegram configuration
 
     def get_field(self, field_name: str) -> SpaceField | None:
         """Get field definition by name."""

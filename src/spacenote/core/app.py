@@ -14,6 +14,7 @@ from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
 from spacenote.core.note.models import Note, PaginationResult
 from spacenote.core.space.models import Space
+from spacenote.core.telegram.models import TelegramBot
 from spacenote.core.user.models import User
 
 
@@ -170,3 +171,24 @@ class App:
         """Get attachments for a space."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.attachment.get_space_attachments(space_id, unassigned_only)
+
+    # Telegram Bot Management (Admin only)
+    async def create_telegram_bot(self, current_user: User, bot_id: str, token: str) -> TelegramBot:
+        """Create a new Telegram bot. Admin only."""
+        self._core.services.access.ensure_admin(current_user.id)
+        return await self._core.services.telegram.create_bot(bot_id, token)
+
+    async def get_telegram_bots(self, current_user: User) -> list[TelegramBot]:
+        """Get all Telegram bots. Admin only."""
+        self._core.services.access.ensure_admin(current_user.id)
+        return await self._core.services.telegram.get_bots()
+
+    async def delete_telegram_bot(self, current_user: User, bot_id: str) -> None:
+        """Delete a Telegram bot. Admin only."""
+        self._core.services.access.ensure_admin(current_user.id)
+        await self._core.services.telegram.delete_bot(bot_id)
+
+    async def update_space_telegram_config(self, current_user: User, space_id: str, telegram_config: dict[str, str]) -> None:
+        """Update Telegram configuration for a space. Space members only."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        await self._core.services.space.update_telegram_config(space_id, telegram_config)
