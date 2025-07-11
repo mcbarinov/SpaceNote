@@ -95,6 +95,10 @@ class NoteService(Service):
         await self._collections[space_id].insert_one(note.to_dict())
 
         log.debug("note_created", note_id=note.id)
+
+        # Send Telegram notification if enabled
+        await self._send_telegram_notification(space_id, "new_note", note, author)
+
         return note
 
     async def get_note(self, space_id: str, note_id: int) -> Note:
@@ -122,7 +126,12 @@ class NoteService(Service):
         )
 
         log.debug("note_updated")
-        return await self.get_note(space_id, note_id)
+
+        # Send Telegram notification if enabled
+        updated_note = await self.get_note(space_id, note_id)
+        await self._send_telegram_notification(space_id, "field_update", updated_note, updated_note.author, raw_fields)
+
+        return updated_note
 
     async def drop_collection(self, space_id: str) -> None:
         """Drop the entire collection for a space."""
@@ -130,6 +139,36 @@ class NoteService(Service):
             raise ValueError(f"Collection for space '{space_id}' does not exist")
         await self._collections[space_id].drop()
         del self._collections[space_id]
+
+    async def _send_telegram_notification(
+        self, space_id: str, event_type: str, note: Note, author: str, changes: dict[str, str] | None = None
+    ) -> None:
+        """Send a Telegram notification for a note event."""
+        try:
+            space = self.core.services.space.get_space(space_id)
+            if not space.telegram or not space.telegram.enabled:
+                return
+
+            # Prepare template context
+            context = {
+                "space": space,
+                "note": note,
+                "author": author,
+                "changes": changes or {},
+                "url": f"{self.core.config.base_url.rstrip('/')}/notes/{space_id}/{note.id}",
+            }
+
+            # Get the appropriate template
+            template = getattr(space.telegram.templates, event_type)
+
+            # Render and send the message
+            message = self.core.services.telegram.render_template(template, context)
+            note_url = f"{self.core.config.base_url.rstrip('/')}/notes/{space_id}/{note.id}"
+            await self.core.services.telegram.send_notification(
+                space.telegram.bot_id, space.telegram.channel_id, message, note_url
+            )
+        except Exception as e:
+            logger.warning("telegram_notification_failed", error=str(e), space_id=space_id, event_type=event_type)
 
     async def count_notes(self, space_id: str) -> int:
         """Count the number of notes in a space."""

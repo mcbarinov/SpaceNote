@@ -28,6 +28,15 @@ class Pages(View):
         spaces = self.app.get_all_spaces(self.current_user)
         return await self.render.html("admin/spaces.j2", spaces=spaces)
 
+    @router.get("/telegram")
+    async def telegram_bots(self) -> HTMLResponse:
+        bots = await self.app.get_telegram_bots(self.current_user)
+        return await self.render.html("admin/telegram-bots.j2", bots=bots)
+
+    @router.get("/telegram/create")
+    async def create_telegram_bot(self) -> HTMLResponse:
+        return await self.render.html("admin/create-telegram-bot.j2")
+
     @router.get("/users/create")
     async def create_user(self) -> HTMLResponse:
         return await self.render.html("admin/create-user.j2")
@@ -66,6 +75,10 @@ class AdminActionRouter(View):
 
     class ImportSpaceForm(BaseModel):
         json_content: str
+
+    class CreateTelegramBotForm(BaseModel):
+        bot_id: str
+        token: str
 
     @router.post("/users/create")
     async def create_user_action(self, form: Annotated[CreateUserForm, Form()]) -> RedirectResponse:
@@ -111,3 +124,15 @@ class AdminActionRouter(View):
         await self.app.delete_space(self.current_user, space_id)
         self.render.flash(f"Space '{space.name}' has been permanently deleted")
         return redirect("/admin/spaces")
+
+    @router.post("/telegram/create")
+    async def create_telegram_bot_action(self, form: Annotated[CreateTelegramBotForm, Form()]) -> RedirectResponse:
+        bot = await self.app.create_telegram_bot(self.current_user, form.bot_id, form.token)
+        self.render.flash(f"Telegram bot '{bot.id}' created successfully")
+        return redirect("/admin/telegram")
+
+    @router.post("/telegram/{bot_id}/delete")
+    async def delete_telegram_bot_action(self, bot_id: str) -> RedirectResponse:
+        await self.app.delete_telegram_bot(self.current_user, bot_id)
+        self.render.flash(f"Telegram bot '{bot_id}' deleted successfully")
+        return redirect("/admin/telegram")

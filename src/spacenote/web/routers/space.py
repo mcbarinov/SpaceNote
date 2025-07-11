@@ -49,6 +49,12 @@ class SpacePageRouter(View):
         space = self.app.get_space(self.current_user, space_id)
         return await self.render.html("spaces/members/index.j2", space=space)
 
+    @router.get("/{space_id}/telegram")
+    async def telegram_settings(self, space_id: str) -> HTMLResponse:
+        space = self.app.get_space(self.current_user, space_id)
+        bots = await self.app.get_telegram_bots(self.current_user) if self.current_user.id == "admin" else []
+        return await self.render.html("spaces/telegram/index.j2", space=space, bots=bots)
+
 
 @cbv(router)
 class SpaceActionRouter(View):
@@ -137,3 +143,12 @@ class SpaceActionRouter(View):
         await self.app.update_space_members(self.current_user, space_id, member_list)
         self.render.flash("Members updated successfully")
         return redirect(f"/spaces/{space_id}/members")
+
+    @router.post("/{space_id}/telegram")
+    async def update_telegram_config(self, space_id: str, request: Request) -> RedirectResponse:
+        form_data = dict(await request.form())
+        # Convert form data to string dict
+        telegram_config = {k: str(v) for k, v in form_data.items()}
+        await self.app.update_space_telegram_config(self.current_user, space_id, telegram_config)
+        self.render.flash("Telegram configuration updated successfully")
+        return redirect(f"/spaces/{space_id}/telegram")

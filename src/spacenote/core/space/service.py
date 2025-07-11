@@ -11,6 +11,7 @@ from spacenote.core.filter.models import Filter
 from spacenote.core.filter.validators import validate_filter
 from spacenote.core.space.json_operations import space_to_json, validate_json_import
 from spacenote.core.space.models import Space
+from spacenote.core.telegram.models import TelegramConfig
 
 logger = structlog.get_logger(__name__)
 
@@ -191,6 +192,33 @@ class SpaceService(Service):
         else:  # update all spaces
             spaces = await Space.list_cursor(self._collection.find())
             self._spaces = {space.id: space for space in spaces}
+
+    async def update_telegram_config(self, space_id: str, telegram_config: dict[str, str]) -> None:
+        """Update Telegram configuration for a space."""
+        log = logger.bind(space_id=space_id, action="update_telegram_config")
+
+        if not self.space_exists(space_id):
+            raise NotFoundError(f"Space '{space_id}' not found")
+
+        # Convert form data to TelegramConfig
+        config = None
+        if telegram_config.get("enabled") == "on":
+            config = TelegramConfig(
+                enabled=True,
+                bot_id=telegram_config["bot_id"],
+                channel_id=telegram_config["channel_id"],
+                templates=TelegramConfig.Templates(
+                    new_note=telegram_config.get("template_new_note", ""),
+                    field_update=telegram_config.get("template_field_update", ""),
+                    comment=telegram_config.get("template_comment", ""),
+                ),
+            )
+
+        await self._collection.update_one({"_id": space_id}, {"$set": {"telegram": config.model_dump() if config else None}})
+
+        # Update cache
+        self._spaces[space_id].telegram = config
+        log.debug("telegram_config_updated")
 
     async def on_start(self) -> None:
         await self.update_cache()

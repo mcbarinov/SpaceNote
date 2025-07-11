@@ -19,6 +19,7 @@
       <th>Members</th>
       <th>Fields</th>
       <th>Filters</th>
+      <th>Telegram</th>
     </tr>
   </thead>
   {%for space in spaces%}
@@ -28,6 +29,7 @@
     <td><a href="/spaces/{{space.id}}/members">{{space.members | length}}</a></td>
     <td><a href="/spaces/{{space.id}}/fields">{{space.fields | length}}</a></td>
     <td><a href="/spaces/{{space.id}}/filters">{{space.filters | length}}</a></td>
+    <td><a href="/spaces/{{space.id}}/telegram">{% if space.telegram and space.telegram.enabled %}✓{% else %}✗{% endif %}</a></td>
   </tr>
   {% endfor%}
 </table>

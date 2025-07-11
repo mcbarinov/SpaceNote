@@ -1,11 +1,14 @@
 from datetime import UTC, datetime
 from typing import Any
 
+import structlog
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.comment.models import Comment
 from spacenote.core.core import Service
+
+logger = structlog.get_logger(__name__)
 
 
 class CommentService(Service):
@@ -43,6 +46,9 @@ class CommentService(Service):
         await self._collections[space_id].insert_one(comment.to_dict())
         await self.core.services.note.update_comment_stats(space_id, note_id, comment.created_at)
 
+        # Send Telegram notification if enabled
+        await self._send_telegram_notification(space_id, comment, author)
+
         return comment
 
     async def get_comments_for_note(self, space_id: str, note_id: int) -> list[Comment]:
@@ -56,6 +62,34 @@ class CommentService(Service):
 
         await self._collections[space_id].drop()
         del self._collections[space_id]
+
+    async def _send_telegram_notification(self, space_id: str, comment: Comment, author: str) -> None:
+        """Send a Telegram notification for a comment event."""
+        try:
+            space = self.core.services.space.get_space(space_id)
+            if not space.telegram or not space.telegram.enabled:
+                return
+
+            # Get the note for context
+            note = await self.core.services.note.get_note(space_id, comment.note_id)
+
+            # Prepare template context
+            context = {
+                "space": space,
+                "note": note,
+                "comment": comment,
+                "author": author,
+                "url": f"{self.core.config.base_url.rstrip('/')}/notes/{space_id}/{comment.note_id}",
+            }
+
+            # Render and send the message
+            message = self.core.services.telegram.render_template(space.telegram.templates.comment, context)
+            note_url = f"{self.core.config.base_url.rstrip('/')}/notes/{space_id}/{comment.note_id}"
+            await self.core.services.telegram.send_notification(
+                space.telegram.bot_id, space.telegram.channel_id, message, note_url
+            )
+        except Exception as e:
+            logger.warning("telegram_notification_failed", error=str(e), space_id=space_id, event_type="comment")
 
     async def count_comments(self, space_id: str) -> int:
         """Count the number of comments in a space."""

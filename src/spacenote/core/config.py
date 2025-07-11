@@ -20,6 +20,9 @@ class CoreConfig(BaseSettings):
     # Logging
     debug: bool = False
 
+    # Web Interface
+    base_url: str = "http://localhost:8000"
+
     model_config = {
         "env_file": ".env",
         "env_prefix": "SPACENOTE_",
