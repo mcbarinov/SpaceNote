@@ -12,13 +12,13 @@ class WebConfig(BaseSettings):
     """Configuration for web layer functionality."""
 
     # Web server
-    host: str = "127.0.0.1"
-    port: int = 3000
+    host: str
+    port: int
     session_secret_key: str
 
     # Web-specific settings
     cors_origins: list[str] = []
-    debug: bool = False
+    debug: bool
 
     model_config = {
         "env_file": ".env",
