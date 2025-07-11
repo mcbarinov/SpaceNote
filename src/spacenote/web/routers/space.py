@@ -52,7 +52,7 @@ class SpacePageRouter(View):
     @router.get("/{space_id}/telegram")
     async def telegram_settings(self, space_id: str) -> HTMLResponse:
         space = self.app.get_space(self.current_user, space_id)
-        bots = await self.app.get_telegram_bots(self.current_user) if self.current_user.id == "admin" else []
+        bots = await self.app.get_telegram_bots(self.current_user)
         return await self.render.html("spaces/telegram/index.j2", space=space, bots=bots)
 
 

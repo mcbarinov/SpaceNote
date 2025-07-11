@@ -179,8 +179,7 @@ class App:
         return await self._core.services.telegram.create_bot(bot_id, token)
 
     async def get_telegram_bots(self, current_user: User) -> list[TelegramBot]:
-        """Get all Telegram bots. Admin only."""
-        self._core.services.access.ensure_admin(current_user.id)
+        """Get all Telegram bots. Available to all authenticated users."""
         return await self._core.services.telegram.get_bots()
 
     async def delete_telegram_bot(self, current_user: User, bot_id: str) -> None:
