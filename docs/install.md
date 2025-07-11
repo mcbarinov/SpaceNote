@@ -59,6 +59,9 @@ MONGO_INITDB_DATABASE=spacenote
 SPACENOTE_SESSION_SECRET_KEY=your-secret-key-change-this-to-random-string
 SPACENOTE_HOST=0.0.0.0
 SPACENOTE_PORT=3000
+SPACENOTE_ATTACHMENTS_PATH=/app/attachments
+SPACENOTE_BASE_URL=https://your-domain.com
+SPACENOTE_DEBUG=false
 
 # Domain Configuration
 DOMAIN=your-domain.com
@@ -95,11 +98,16 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    volumes:
+      - ./attachments:/app/attachments
     environment:
       SPACENOTE_DATABASE_URL: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
       SPACENOTE_SESSION_SECRET_KEY: ${SPACENOTE_SESSION_SECRET_KEY}
       SPACENOTE_HOST: ${SPACENOTE_HOST}
       SPACENOTE_PORT: ${SPACENOTE_PORT}
+      SPACENOTE_ATTACHMENTS_PATH: ${SPACENOTE_ATTACHMENTS_PATH}
+      SPACENOTE_BASE_URL: ${SPACENOTE_BASE_URL}
+      SPACENOTE_DEBUG: ${SPACENOTE_DEBUG}
     depends_on:
       - mongodb
     networks:
