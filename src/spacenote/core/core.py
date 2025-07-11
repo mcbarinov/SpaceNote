@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from spacenote.core.comment.service import CommentService
     from spacenote.core.export.service import ExportService
     from spacenote.core.note.service import NoteService
+    from spacenote.core.session.service import SessionService
     from spacenote.core.space.service import SpaceService
     from spacenote.core.telegram.service import TelegramService
     from spacenote.core.user.service import UserService
@@ -56,6 +57,7 @@ class Services:
     export: ExportService
     attachment: AttachmentService
     telegram: TelegramService
+    session: SessionService
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         from spacenote.core.access.service import AccessService  # noqa: PLC0415
@@ -63,6 +65,7 @@ class Services:
         from spacenote.core.comment.service import CommentService  # noqa: PLC0415
         from spacenote.core.export.service import ExportService  # noqa: PLC0415
         from spacenote.core.note.service import NoteService  # noqa: PLC0415
+        from spacenote.core.session.service import SessionService  # noqa: PLC0415
         from spacenote.core.space.service import SpaceService  # noqa: PLC0415
         from spacenote.core.telegram.service import TelegramService  # noqa: PLC0415
         from spacenote.core.user.service import UserService  # noqa: PLC0415
@@ -75,6 +78,7 @@ class Services:
         self.export = ExportService(database)
         self.attachment = AttachmentService(database)
         self.telegram = TelegramService(database)
+        self.session = SessionService(database)
 
     def set_core(self, core: Core) -> None:
         """Set core reference for all services."""
@@ -86,6 +90,7 @@ class Services:
         self.export.set_core(core)
         self.attachment.set_core(core)
         self.telegram.set_core(core)
+        self.session.set_core(core)
 
 
 class Core:
@@ -122,6 +127,7 @@ class Core:
         await self.services.comment.on_start()
         await self.services.note.on_start()
         await self.services.attachment.on_start()
+        await self.services.session.on_start()
 
     async def on_stop(self) -> None:
         """Cleanup on application shutdown."""

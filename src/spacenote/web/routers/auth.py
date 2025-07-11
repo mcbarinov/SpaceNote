@@ -30,8 +30,13 @@ class Auth(AuthView):
         return await self.render.html("login.j2")
 
     @router.post("/login", response_model=None)
-    async def login(self, response: Response, form: Annotated[LoginForm, Form()]) -> HTMLResponse | RedirectResponse:
-        session_id = await self.app.login(form.username, form.password)
+    async def login(
+        self, request: Request, response: Response, form: Annotated[LoginForm, Form()]
+    ) -> HTMLResponse | RedirectResponse:
+        user_agent = request.headers.get("user-agent")
+        ip_address = request.client.host if request.client else None
+
+        session_id = await self.app.login(form.username, form.password, user_agent, ip_address)
         if not session_id:
             return await self.render.html("login.j2", error="Invalid username or password")
 
@@ -42,7 +47,7 @@ class Auth(AuthView):
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="lax",
-            max_age=24 * 60 * 60,  # 24 hours
+            max_age=30 * 24 * 60 * 60,  # 30 days to match session duration
         )
         return response
 

@@ -1,4 +1,3 @@
-import secrets
 from typing import Any
 
 import structlog
@@ -26,13 +25,6 @@ class UserService(Service):
             raise NotFoundError(f"User '{id}' not found")
         return self._users[id]
 
-    def get_user_by_session(self, session_id: str) -> User | None:
-        """Get user by session ID from cache."""
-        for user in self._users.values():
-            if user.session_id == session_id:
-                return user
-        return None
-
     def user_exists(self, id: str) -> bool:
         """Check if a user exists by ID."""
         return id in self._users
@@ -49,7 +41,7 @@ class UserService(Service):
             log.warning("user_already_exists")
             raise ValueError(f"User with ID '{id}' already exists")
 
-        user_data = {"_id": id, "password_hash": hash_password(password), "session_id": None}
+        user_data = {"_id": id, "password_hash": hash_password(password)}
         await self._collection.insert_one(User.model_validate(user_data).to_dict())
         await self.update_cache(id)
 
@@ -64,7 +56,7 @@ class UserService(Service):
         if not verify_password(old_password, user.password_hash):
             raise ValueError("Current password is incorrect")
 
-        updated = {"password_hash": hash_password(new_password), "session_id": None}
+        updated = {"password_hash": hash_password(new_password)}
         await self._collection.update_one({"_id": user_id}, {"$set": updated})
         await self.update_cache(user_id)
 
@@ -72,39 +64,26 @@ class UserService(Service):
         if not self.user_exists("admin"):
             await self.create_user("admin", "admin")
 
-    async def login(self, username: str, password: str) -> str | None:
-        """Authenticate user and return session ID."""
-        log = logger.bind(username=username, action="login")
-        log.debug("login_attempt")
+    def verify_password(self, username: str, password: str) -> bool:
+        """Verify user password."""
+        log = logger.bind(username=username, action="verify_password")
+        log.debug("password_verification_attempt")
 
         if not self.user_exists(username):
-            log.warning("login_failed", reason="user_not_found")
-            return None
+            log.warning("verification_failed", reason="user_not_found")
+            return False
 
-        user = self.get_user(username)
-        if not verify_password(password, user.password_hash):
-            log.warning("login_failed", reason="invalid_password")
-            return None
-
-        session_id = secrets.token_urlsafe(32)
-        await self._collection.update_one({"_id": username}, {"$set": {"session_id": session_id}})
-        await self.update_cache(username)
-
-        log.debug("login_success", session_id=session_id)
-        return session_id
-
-    async def logout(self, user_id: str) -> None:
-        """Logout user by clearing session ID."""
-        log = logger.bind(user_id=user_id, action="logout")
-
-        if not self.user_exists(user_id):
-            log.warning("logout_failed", reason="user_not_found")
-            raise NotFoundError(f"User '{user_id}' not found")
-
-        await self._collection.update_one({"_id": user_id}, {"$set": {"session_id": None}})
-        await self.update_cache(user_id)
-
-        log.debug("logout_success")
+        try:
+            user = self.get_user(username)
+            if not verify_password(password, user.password_hash):
+                log.warning("verification_failed", reason="invalid_password")
+                return False
+        except NotFoundError:
+            log.warning("verification_failed", reason="user_not_found")
+            return False
+        else:
+            log.debug("password_verified")
+            return True
 
     async def update_cache(self, id: str | None = None) -> None:
         """Reload users cache from database."""

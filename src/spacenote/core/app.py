@@ -13,6 +13,7 @@ from spacenote.core.export.models import ImportResult
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
 from spacenote.core.note.models import Note, PaginationResult
+from spacenote.core.session.models import Session
 from spacenote.core.space.models import Space
 from spacenote.core.telegram.models import TelegramBot
 from spacenote.core.user.models import User
@@ -29,15 +30,21 @@ class App:
             yield
 
     async def get_user_by_session(self, session_id: str) -> User | None:
-        return self._core.services.user.get_user_by_session(session_id)
+        session = await self._core.services.session.get_session(session_id)
+        if session is None:
+            return None
+        return self._core.services.user.get_user(session.user_id)
 
-    async def login(self, username: str, password: str) -> str | None:
-        return await self._core.services.user.login(username, password)
+    async def login(
+        self, username: str, password: str, user_agent: str | None = None, ip_address: str | None = None
+    ) -> str | None:
+        if not self._core.services.user.verify_password(username, password):
+            return None
+        session = await self._core.services.session.create_session(username, user_agent, ip_address)
+        return session.id
 
     async def logout(self, session_id: str) -> None:
-        user = self._core.services.user.get_user_by_session(session_id)
-        if user:
-            await self._core.services.user.logout(user.id)
+        await self._core.services.session.delete_session(session_id)
 
     def get_users(self, current_user: User) -> list[User]:
         self._core.services.access.ensure_admin(current_user.id)
@@ -161,6 +168,16 @@ class App:
     async def change_password(self, current_user: User, old_password: str, new_password: str) -> None:
         """Change password for the current user."""
         await self._core.services.user.change_password(current_user.id, old_password, new_password)
+        # Logout all sessions for security
+        await self._core.services.session.delete_user_sessions(current_user.id)
+
+    async def get_user_sessions(self, current_user: User) -> list[Session]:
+        """Get all active sessions for the current user."""
+        return await self._core.services.session.get_user_sessions(current_user.id)
+
+    async def logout_all_sessions(self, current_user: User) -> int:
+        """Logout from all devices by deleting all sessions."""
+        return await self._core.services.session.delete_user_sessions(current_user.id)
 
     async def upload_attachment(self, current_user: User, space_id: str, file: UploadFile) -> Attachment:
         """Upload a file attachment to a space."""
@@ -178,7 +195,7 @@ class App:
         self._core.services.access.ensure_admin(current_user.id)
         return await self._core.services.telegram.create_bot(bot_id, token)
 
-    async def get_telegram_bots(self, current_user: User) -> list[TelegramBot]:
+    async def get_telegram_bots(self, _current_user: User) -> list[TelegramBot]:
         """Get all Telegram bots. Available to all authenticated users."""
         return await self._core.services.telegram.get_bots()
 
