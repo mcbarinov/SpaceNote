@@ -1,11 +1,14 @@
 from typing import Annotated
 
+import structlog
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from spacenote.web.class_based_view import cbv
 from spacenote.web.deps import View
 from spacenote.web.utils import redirect
+
+logger = structlog.get_logger(__name__)
 
 router: APIRouter = APIRouter(prefix="/notes")
 
@@ -21,8 +24,10 @@ class NotePageRouter(View):
     async def list_notes(
         self, space_id: str, filter: str | None = None, page: int = 1, page_size: int | None = None
     ) -> HTMLResponse:
+        log = logger.bind(space_id=space_id, filter=filter, page=page, page_size=page_size)
         space = self.app.get_space(self.current_user, space_id)
         pagination_result = await self.app.list_notes(self.current_user, space_id, filter, page, page_size)
+        log.debug("listing_notes", pagination_result=pagination_result)
 
         # Get the current filter object if filter ID is provided
         current_filter_obj = None

@@ -1,12 +1,15 @@
 import secrets
 from typing import Any
 
+import structlog
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
 from spacenote.core.user.models import User
 from spacenote.core.user.password import hash_password, validate_password_strength, verify_password
+
+logger = structlog.get_logger(__name__)
 
 
 class UserService(Service):
@@ -40,11 +43,17 @@ class UserService(Service):
 
     async def create_user(self, id: str, password: str) -> User:
         """Create a new user with hashed password."""
+        log = logger.bind(user_id=id, action="create_user")
+
         if self.user_exists(id):
+            log.warning("user_already_exists")
             raise ValueError(f"User with ID '{id}' already exists")
+
         user_data = {"_id": id, "password_hash": hash_password(password), "session_id": None}
         await self._collection.insert_one(User.model_validate(user_data).to_dict())
         await self.update_cache(id)
+
+        log.debug("user_created")
         return self.get_user(id)
 
     async def change_password(self, user_id: str, old_password: str, new_password: str) -> None:
@@ -65,25 +74,37 @@ class UserService(Service):
 
     async def login(self, username: str, password: str) -> str | None:
         """Authenticate user and return session ID."""
+        log = logger.bind(username=username, action="login")
+        log.debug("login_attempt")
+
         if not self.user_exists(username):
+            log.warning("login_failed", reason="user_not_found")
             return None
+
         user = self.get_user(username)
         if not verify_password(password, user.password_hash):
+            log.warning("login_failed", reason="invalid_password")
             return None
 
         session_id = secrets.token_urlsafe(32)
         await self._collection.update_one({"_id": username}, {"$set": {"session_id": session_id}})
         await self.update_cache(username)
 
+        log.debug("login_success", session_id=session_id)
         return session_id
 
     async def logout(self, user_id: str) -> None:
         """Logout user by clearing session ID."""
+        log = logger.bind(user_id=user_id, action="logout")
+
         if not self.user_exists(user_id):
+            log.warning("logout_failed", reason="user_not_found")
             raise NotFoundError(f"User '{user_id}' not found")
 
         await self._collection.update_one({"_id": user_id}, {"$set": {"session_id": None}})
         await self.update_cache(user_id)
+
+        log.debug("logout_success")
 
     async def update_cache(self, id: str | None = None) -> None:
         """Reload users cache from database."""
@@ -100,3 +121,4 @@ class UserService(Service):
         """Initialize service on application startup."""
         await self.update_cache()
         await self.ensure_admin_user_exists()
+        logger.debug("user_service_started", user_count=len(self._users))

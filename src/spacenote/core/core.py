@@ -9,6 +9,7 @@ from pymongo import AsyncMongoClient
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.config import CoreConfig
+from spacenote.core.logging import setup_logging
 
 if TYPE_CHECKING:
     from spacenote.core.access.service import AccessService
@@ -86,6 +87,9 @@ class Core:
 
     def __init__(self, config: CoreConfig) -> None:
         """Initialize the core application with configuration."""
+        # Setup logging first
+        setup_logging(config)
+
         self.mongo_client = AsyncMongoClient(config.database_url)
         self.database = self.mongo_client.get_database(urlparse(config.database_url).path[1:])
         self.services = Services(self.database)
