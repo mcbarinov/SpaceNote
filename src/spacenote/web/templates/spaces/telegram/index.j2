@@ -33,13 +33,13 @@
         <legend>Message Templates</legend>
         
         <label for="template_new_note">New Note Template:</label>
-        <textarea name="template_new_note" id="template_new_note" rows="3">{{ space.telegram.templates.new_note if space.telegram else '📝 New note in {{space.name|escape_html}}\nNote #{{note.id}}\nAuthor: {{note.author|escape_html}}\n\n🔗 {{url}}' }}</textarea>
+        <textarea name="template_new_note" id="template_new_note" rows="3">{{ space.telegram.templates.new_note if space.telegram else '📝 New note in {{space.name|escape_html}}\nNote #{{note.id}}\nAuthor: {{note.author|escape_html}}' }}</textarea>
         
         <label for="template_field_update">Field Update Template:</label>
-        <textarea name="template_field_update" id="template_field_update" rows="3">{{ space.telegram.templates.field_update if space.telegram else '✏️ Note updated in {{space.name|escape_html}}\nNote #{{note.id}}\nAuthor: {{note.author|escape_html}}\n\n🔗 {{url}}' }}</textarea>
+        <textarea name="template_field_update" id="template_field_update" rows="3">{{ space.telegram.templates.field_update if space.telegram else '✏️ Note updated in {{space.name|escape_html}}\nNote #{{note.id}}\nAuthor: {{note.author|escape_html}}' }}</textarea>
         
         <label for="template_comment">Comment Template:</label>
-        <textarea name="template_comment" id="template_comment" rows="3">{{ space.telegram.templates.comment if space.telegram else '💬 New comment in {{space.name|escape_html}}\nNote #{{note.id}}\nBy {{comment.author|escape_html}}: {{comment.content|escape_html}}\n\n🔗 {{url}}' }}</textarea>
+        <textarea name="template_comment" id="template_comment" rows="3">{{ space.telegram.templates.comment if space.telegram else '💬 New comment in {{space.name|escape_html}}\nNote #{{note.id}}\nBy {{comment.author|escape_html}}: {{comment.content|escape_html}}' }}</textarea>
         
         <small>
             Available variables: space.name, note.id, note.fields.*, note.author, comment.author, comment.content, changes, url

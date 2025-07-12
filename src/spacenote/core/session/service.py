@@ -9,6 +9,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
 from spacenote.core.session.models import Session
+from spacenote.core.user.models import SessionId, User
 
 logger = structlog.get_logger(__name__)
 
@@ -21,8 +22,9 @@ class SessionService(Service):
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
         super().__init__(database)
         self._collection = database.get_collection("sessions")
+        self._session_cache: dict[SessionId, User] = {}
 
-    async def create_session(self, user_id: str, user_agent: str | None = None, ip_address: str | None = None) -> Session:
+    async def create_session(self, user_id: str, user_agent: str | None = None, ip_address: str | None = None) -> SessionId:
         """Create a new session for a user."""
         log = logger.bind(user_id=user_id, action="create_session")
 
@@ -40,8 +42,9 @@ class SessionService(Service):
         session = Session.model_validate(session_data)
         await self._collection.insert_one(session.to_dict())
 
-        log.debug("session_created", session_id=session.id)
-        return session
+        session_id = SessionId(session.id)
+        log.debug("session_created", session_id=session_id)
+        return session_id
 
     async def get_session(self, session_id: str) -> Session | None:
         """Get session by ID and update last_used timestamp."""
@@ -70,6 +73,9 @@ class SessionService(Service):
             log.warning("session_not_found")
             raise NotFoundError(f"Session '{session_id}' not found")
 
+        # Clear from cache
+        self.invalidate_session_cache(SessionId(session_id))
+
         log.debug("session_deleted")
 
     async def delete_user_sessions(self, user_id: str) -> int:
@@ -77,9 +83,42 @@ class SessionService(Service):
         log = logger.bind(user_id=user_id, action="delete_user_sessions")
 
         result = await self._collection.delete_many({"user_id": user_id})
+
+        # Clear sessions from cache
+        sessions_to_remove = [sid for sid, user in self._session_cache.items() if user.id == user_id]
+        for session_id in sessions_to_remove:
+            del self._session_cache[session_id]
+
         log.debug("user_sessions_deleted", count=result.deleted_count)
 
         return result.deleted_count
+
+    async def get_user_by_session(self, session_id: SessionId) -> User | None:
+        """Get user by session ID using cache."""
+        # Check cache first
+        if session_id in self._session_cache:
+            return self._session_cache[session_id]
+
+        # Get session from database
+        session = await self.get_session(session_id)
+        if session is None:
+            return None
+
+        # Get user from UserService and cache it
+        user = self.core.services.user.get_user(session.user_id)
+        self._session_cache[session_id] = user
+
+        return user
+
+    def invalidate_session_cache(self, session_id: SessionId) -> None:
+        """Remove session from cache."""
+        self._session_cache.pop(session_id, None)
+
+    def invalidate_user_session_cache(self, user_id: str) -> None:
+        """Remove all sessions for a user from cache."""
+        sessions_to_remove = [sid for sid, user in self._session_cache.items() if user.id == user_id]
+        for session_id in sessions_to_remove:
+            del self._session_cache[session_id]
 
     async def cleanup_expired_sessions(self) -> int:
         """Remove expired sessions. This is called periodically."""
