@@ -40,6 +40,24 @@ class AttachmentPageRouter(View):
             media_type=attachment.content_type,
         )
 
+    @router.get("/spaces/{space_id}/preview/{attachment_id}")
+    async def get_attachment_preview(self, space_id: str, attachment_id: int) -> FileResponse:
+        """Get a preview image for an attachment."""
+        attachment = await self.app.get_attachment(self.current_user, space_id, attachment_id)
+
+        # Only serve previews for image attachments
+        if not attachment.media_category == "images":
+            raise HTTPException(status_code=404, detail="Preview not available for this file type")
+
+        preview_path = self.app.get_attachment_preview_path(self.current_user, attachment)
+        if not preview_path.exists():
+            raise HTTPException(status_code=404, detail="Preview not found")
+
+        return FileResponse(
+            path=preview_path,
+            media_type="image/jpeg",
+        )
+
     @router.post("/spaces/{space_id}/assign/{attachment_id}/note/{note_id}")
     async def assign_attachment_to_note(self, space_id: str, attachment_id: int, note_id: int) -> RedirectResponse:
         """Assign an attachment to a specific note."""

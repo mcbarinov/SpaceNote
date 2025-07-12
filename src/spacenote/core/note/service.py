@@ -5,6 +5,7 @@ import structlog
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
+from spacenote.core.attachment.models import AttachmentCategory
 from spacenote.core.core import Service
 from spacenote.core.field.validators import validate_note_fields
 from spacenote.core.filter.mongo import build_mongodb_query, build_sort_spec
@@ -114,13 +115,21 @@ class NoteService(Service):
             {"_id": note_id}, {"$inc": {"comment_count": 1}, "$set": {"last_comment_at": last_comment_date}}
         )
 
-    async def increment_attachment_count(self, space_id: str, note_id: int) -> None:
-        """Increment the attachment count for a note."""
-        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": {"attachment_count": 1}})
+    async def increment_attachment_counts(self, space_id: str, note_id: int, category: AttachmentCategory) -> None:
+        """Increment the attachment counts for a note based on category."""
+        update_fields = {
+            "attachment_counts.total": 1,
+            f"attachment_counts.{category}": 1,
+        }
+        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": update_fields})
 
-    async def decrement_attachment_count(self, space_id: str, note_id: int) -> None:
-        """Decrement the attachment count for a note."""
-        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": {"attachment_count": -1}})
+    async def decrement_attachment_counts(self, space_id: str, note_id: int, category: AttachmentCategory) -> None:
+        """Decrement the attachment counts for a note based on category."""
+        update_fields = {
+            "attachment_counts.total": -1,
+            f"attachment_counts.{category}": -1,
+        }
+        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": update_fields})
 
     async def update_note_from_raw_fields(self, space_id: str, note_id: int, raw_fields: dict[str, str]) -> Note:
         """Update an existing note in a space from raw field values (validates and converts)."""
