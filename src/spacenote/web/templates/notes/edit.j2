@@ -81,6 +81,26 @@
                {% if field.options.get('max') %}max="{{field.options.get('max')}}"{% endif %}
                {% if field.required %}required{% endif %}>
       
+      {% elif field.type == "image" %}
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+          <option value="">Select image...</option>
+          {% for attachment in unassigned_image_attachments %}
+            <option value="{{attachment.id}}" {% if current_value == attachment.id %}selected{% endif %}>
+              {{attachment.filename}} ({{attachment.id}})
+            </option>
+          {% endfor %}
+          {% if current_value %}
+            {% for attachment in note_image_attachments %}
+              {% if attachment.id == current_value %}
+                <option value="{{attachment.id}}" selected>
+                  {{attachment.filename}} ({{attachment.id}}) - Currently Selected
+                </option>
+              {% endif %}
+            {% endfor %}
+          {% endif %}
+        </select>
+        <small>Images must be uploaded to the space first via <a href="/attachments/{{space.id}}">Attachments</a></small>
+      
       {% endif %}
     </div>
   {% endfor %}

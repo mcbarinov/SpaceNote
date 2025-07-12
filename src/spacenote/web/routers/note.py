@@ -49,7 +49,9 @@ class NotePageRouter(View):
     @router.get("/{space_id}/create")
     async def create_note_form(self, space_id: str) -> HTMLResponse:
         space = self.app.get_space(self.current_user, space_id)
-        return await self.render.html("notes/create.j2", space=space)
+        unassigned_attachments = await self.app.get_space_attachments(self.current_user, space_id, unassigned_only=True)
+        unassigned_image_attachments = [att for att in unassigned_attachments if att.category.value == "images"]
+        return await self.render.html("notes/create.j2", space=space, unassigned_image_attachments=unassigned_image_attachments)
 
     @router.get("/{space_id}/{note_id}")
     async def view_note(self, space_id: str, note_id: int) -> HTMLResponse:
@@ -62,7 +64,17 @@ class NotePageRouter(View):
     async def edit_note_form(self, space_id: str, note_id: int) -> HTMLResponse:
         space = self.app.get_space(self.current_user, space_id)
         note = await self.app.get_note(self.current_user, space_id, note_id)
-        return await self.render.html("notes/edit.j2", space=space, note=note)
+        unassigned_attachments = await self.app.get_space_attachments(self.current_user, space_id, unassigned_only=True)
+        unassigned_image_attachments = [att for att in unassigned_attachments if att.category.value == "images"]
+        note_attachments = await self.app.get_note_attachments(self.current_user, space_id, note_id)
+        note_image_attachments = [att for att in note_attachments if att.category.value == "images"]
+        return await self.render.html(
+            "notes/edit.j2",
+            space=space,
+            note=note,
+            unassigned_image_attachments=unassigned_image_attachments,
+            note_image_attachments=note_image_attachments,
+        )
 
 
 @cbv(router)
