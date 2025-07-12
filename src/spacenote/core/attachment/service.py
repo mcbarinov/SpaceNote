@@ -42,9 +42,8 @@ class AttachmentService(Service):
         last_attachment = await collection.find({}).sort("_id", -1).limit(1).to_list(1)
         next_id = 1 if not last_attachment else last_attachment[0]["_id"] + 1
 
-        # Determine file extension
+        # Get the filename
         filename = file.filename or "unnamed"
-        file_extension = Path(filename).suffix
 
         # Create attachment record
         attachment = Attachment(
@@ -53,7 +52,6 @@ class AttachmentService(Service):
             filename=filename,
             content_type=file.content_type or "application/octet-stream",
             size=0,  # Will be updated after saving file
-            path="",  # Will be set after saving file
             author=author,
             created_at=datetime.now(UTC),
             note_id=None,  # Unassigned
@@ -61,21 +59,15 @@ class AttachmentService(Service):
 
         # Ensure directories exist
         attachments_root = Path(self.core.config.attachments_path)
-        space_dir = attachments_root / space_id
-        unassigned_dir = space_dir / "__unassigned__"
-        unassigned_dir.mkdir(parents=True, exist_ok=True)
-
-        # Save file to disk
-        storage_filename = f"{filename}__{next_id}{file_extension}"
-        file_path = unassigned_dir / storage_filename
+        file_path = attachments_root / attachment.path
+        file_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Read and save file content
         content = await file.read()
         file_path.write_bytes(content)
 
-        # Update attachment with actual size and path
+        # Update attachment with actual size
         attachment.size = len(content)
-        attachment.path = f"{space_id}/__unassigned__/{storage_filename}"
 
         # Save attachment record to database
         await collection.insert_one(attachment.to_dict())
@@ -106,6 +98,118 @@ class AttachmentService(Service):
         """Get the full file system path for an attachment."""
         attachments_root = Path(self.core.config.attachments_path)
         return attachments_root / attachment.path
+
+    async def assign_to_note(self, space_id: str, attachment_id: int, note_id: int) -> Attachment:
+        """Assign an attachment to a specific note."""
+        log = logger.bind(space_id=space_id, attachment_id=attachment_id, note_id=note_id)
+        log.debug("assigning_attachment_to_note")
+
+        # Get the attachment
+        attachment = await self.get_attachment(space_id, attachment_id)
+        if attachment.note_id is not None:
+            raise ValueError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
+
+        # Get old path before updating the record
+        attachments_root = Path(self.core.config.attachments_path)
+        old_path = attachments_root / attachment.path
+
+        # Check if the file exists
+        if not old_path.exists():
+            raise FileNotFoundError(f"Attachment file not found: {old_path}")
+
+        # Update the database record
+        collection = self._collections[space_id]
+        await collection.update_one({"_id": attachment_id}, {"$set": {"note_id": note_id}})
+
+        # Update attachment note_id (affects calculated path)
+        attachment.note_id = note_id
+        new_path = attachments_root / attachment.path
+
+        # Create new directory structure
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Move the file
+        shutil.move(str(old_path), str(new_path))
+
+        # Update the attachment count on the note
+        await self.core.services.note.increment_attachment_count(space_id, note_id)
+
+        log.debug("attachment_assigned_to_note")
+        return attachment
+
+    async def unassign_from_note(self, space_id: str, attachment_id: int) -> Attachment:
+        """Unassign an attachment from its note (move back to unassigned)."""
+        log = logger.bind(space_id=space_id, attachment_id=attachment_id)
+        log.debug("unassigning_attachment_from_note")
+
+        # Get the attachment
+        attachment = await self.get_attachment(space_id, attachment_id)
+        if attachment.note_id is None:
+            raise ValueError(f"Attachment {attachment_id} is not assigned to any note")
+
+        old_note_id = attachment.note_id
+
+        # Get old path before updating the record
+        attachments_root = Path(self.core.config.attachments_path)
+        old_path = attachments_root / attachment.path
+
+        # Check if the file exists
+        if not old_path.exists():
+            raise FileNotFoundError(f"Attachment file not found: {old_path}")
+
+        # Update the database record to unassign
+        collection = self._collections[space_id]
+        await collection.update_one({"_id": attachment_id}, {"$set": {"note_id": None}})
+
+        # Update attachment note_id (affects calculated path)
+        attachment.note_id = None
+        new_path = attachments_root / attachment.path
+
+        # Create unassigned directory
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Move the file
+        shutil.move(str(old_path), str(new_path))
+
+        # Update the attachment count on the old note
+        await self.core.services.note.decrement_attachment_count(space_id, old_note_id)
+
+        log.debug("attachment_unassigned_from_note")
+        return attachment
+
+    async def delete_attachment(self, space_id: str, attachment_id: int) -> None:
+        """Delete an attachment (file and database record)."""
+        log = logger.bind(space_id=space_id, attachment_id=attachment_id)
+        log.debug("deleting_attachment")
+
+        # Get the attachment first
+        attachment = await self.get_attachment(space_id, attachment_id)
+
+        # Delete the file from disk
+        attachments_root = Path(self.core.config.attachments_path)
+        file_path = attachments_root / attachment.path
+
+        if file_path.exists():
+            file_path.unlink()
+            log.debug("attachment_file_deleted", file_path=str(file_path))
+        else:
+            log.warning("attachment_file_not_found", file_path=str(file_path))
+
+        # If attachment was assigned to a note, decrement the count
+        if attachment.note_id is not None:
+            await self.core.services.note.decrement_attachment_count(space_id, attachment.note_id)
+
+        # Delete the database record
+        collection = self._collections[space_id]
+        await collection.delete_one({"_id": attachment_id})
+
+        log.debug("attachment_deleted")
+
+    async def get_note_attachments(self, space_id: str, note_id: int) -> list[Attachment]:
+        """Get attachments assigned to a specific note."""
+        collection = self._collections[space_id]
+        cursor = collection.find({"note_id": note_id}).sort("_id", -1)
+        return await Attachment.list_cursor(cursor)
 
     async def drop_collection(self, space_id: str) -> None:
         """Drop the entire collection for a space and cleanup files."""

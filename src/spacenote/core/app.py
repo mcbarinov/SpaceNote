@@ -200,6 +200,26 @@ class App:
         self._core.services.access.ensure_space_member(attachment.space_id, current_user.id)
         return self._core.services.attachment.get_file_path(attachment)
 
+    async def assign_attachment_to_note(self, current_user: User, space_id: str, attachment_id: int, note_id: int) -> Attachment:
+        """Assign an attachment to a specific note."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.assign_to_note(space_id, attachment_id, note_id)
+
+    async def get_note_attachments(self, current_user: User, space_id: str, note_id: int) -> list[Attachment]:
+        """Get attachments for a specific note."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.get_note_attachments(space_id, note_id)
+
+    async def unassign_attachment_from_note(self, current_user: User, space_id: str, attachment_id: int) -> Attachment:
+        """Unassign an attachment from its note."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.unassign_from_note(space_id, attachment_id)
+
+    async def delete_attachment(self, current_user: User, space_id: str, attachment_id: int) -> None:
+        """Delete an attachment."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        await self._core.services.attachment.delete_attachment(space_id, attachment_id)
+
     # Telegram Bot Management (Admin only)
     async def create_telegram_bot(self, current_user: User, bot_id: str, token: str) -> TelegramBot:
         """Create a new Telegram bot. Admin only."""
