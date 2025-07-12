@@ -9,6 +9,7 @@ from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.attachment.models import Attachment
+from spacenote.core.attachment.preview import generate_preview, get_preview_path, is_image
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
 
@@ -72,6 +73,16 @@ class AttachmentService(Service):
         # Save attachment record to database
         await collection.insert_one(attachment.to_dict())
 
+        # Generate preview for images
+        if is_image(attachment.content_type):
+            try:
+                preview_root = self.get_preview_root()
+                preview_path = get_preview_path(file_path, preview_root)
+                await generate_preview(file_path, preview_path)
+                log.debug("preview_generated", attachment_id=attachment.id)
+            except Exception as e:
+                log.warning("preview_generation_failed", attachment_id=attachment.id, error=str(e))
+
         log.debug("file_uploaded", attachment_id=attachment.id, size=attachment.size)
         return attachment
 
@@ -98,6 +109,11 @@ class AttachmentService(Service):
         """Get the full file system path for an attachment."""
         attachments_root = Path(self.core.config.attachments_path)
         return attachments_root / attachment.path
+
+    def get_preview_root(self) -> Path:
+        """Get the preview root directory."""
+        attachments_root = Path(self.core.config.attachments_path)
+        return Path(f"{attachments_root}_preview")
 
     async def assign_to_note(self, space_id: str, attachment_id: int, note_id: int) -> Attachment:
         """Assign an attachment to a specific note."""
@@ -130,6 +146,17 @@ class AttachmentService(Service):
 
         # Move the file
         shutil.move(str(old_path), str(new_path))
+
+        # Move preview file if it exists
+        if is_image(attachment.content_type):
+            preview_root = self.get_preview_root()
+            old_preview_path = get_preview_path(old_path, preview_root)
+            new_preview_path = get_preview_path(new_path, preview_root)
+
+            if old_preview_path.exists():
+                new_preview_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(old_preview_path), str(new_preview_path))
+                log.debug("preview_moved_with_attachment")
 
         # Update the attachment count on the note
         await self.core.services.note.increment_attachment_count(space_id, note_id)
@@ -171,6 +198,17 @@ class AttachmentService(Service):
         # Move the file
         shutil.move(str(old_path), str(new_path))
 
+        # Move preview file if it exists
+        if is_image(attachment.content_type):
+            preview_root = self.get_preview_root()
+            old_preview_path = get_preview_path(old_path, preview_root)
+            new_preview_path = get_preview_path(new_path, preview_root)
+
+            if old_preview_path.exists():
+                new_preview_path.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(str(old_preview_path), str(new_preview_path))
+                log.debug("preview_moved_with_attachment")
+
         # Update the attachment count on the old note
         await self.core.services.note.decrement_attachment_count(space_id, old_note_id)
 
@@ -194,6 +232,17 @@ class AttachmentService(Service):
             log.debug("attachment_file_deleted", file_path=str(file_path))
         else:
             log.warning("attachment_file_not_found", file_path=str(file_path))
+
+        # Delete preview file if it exists
+        if is_image(attachment.content_type):
+            preview_root = self.get_preview_root()
+            preview_path = get_preview_path(file_path, preview_root)
+
+            if preview_path.exists():
+                preview_path.unlink()
+                log.debug("preview_file_deleted", preview_path=str(preview_path))
+            else:
+                log.debug("preview_file_not_found", preview_path=str(preview_path))
 
         # If attachment was assigned to a note, decrement the count
         if attachment.note_id is not None:
@@ -221,6 +270,12 @@ class AttachmentService(Service):
         space_dir = attachments_root / space_id
         if space_dir.exists():
             shutil.rmtree(space_dir)
+
+        # Delete all preview files
+        preview_root = self.get_preview_root()
+        preview_space_dir = preview_root / space_id
+        if preview_space_dir.exists():
+            shutil.rmtree(preview_space_dir)
 
         # Drop the database collection
         await self._collections[space_id].drop()
