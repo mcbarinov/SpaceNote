@@ -114,6 +114,14 @@ class NoteService(Service):
             {"_id": note_id}, {"$inc": {"comment_count": 1}, "$set": {"last_comment_at": last_comment_date}}
         )
 
+    async def increment_attachment_count(self, space_id: str, note_id: int) -> None:
+        """Increment the attachment count for a note."""
+        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": {"attachment_count": 1}})
+
+    async def decrement_attachment_count(self, space_id: str, note_id: int) -> None:
+        """Decrement the attachment count for a note."""
+        await self._collections[space_id].update_one({"_id": note_id}, {"$inc": {"attachment_count": -1}})
+
     async def update_note_from_raw_fields(self, space_id: str, note_id: int, raw_fields: dict[str, str]) -> Note:
         """Update an existing note in a space from raw field values (validates and converts)."""
         log = logger.bind(space_id=space_id, note_id=note_id, action="update_note")

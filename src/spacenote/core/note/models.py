@@ -28,3 +28,4 @@ class Note(MongoModel):
     fields: dict[str, FieldValueType]  # User-defined fields as defined in Space.fields
     comment_count: int = 0  # Number of comments on this note
     last_comment_at: datetime | None = None  # Date of the most recent comment
+    attachment_count: int = 0  # Number of attachments assigned to this note
