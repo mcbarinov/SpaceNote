@@ -404,9 +404,10 @@ During the prototyping phase, SpaceNote supports two parallel web implementation
 
 ### New SPA Web
 - **Language**: TypeScript
-- **Framework**: React
-- **State Management**: Zustand
-- **Build Tool**: TBD
+- **Framework**: React 19
+- **State Management**: Zustand 5.0
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Build Tool**: Vite
 - **Port**: `SPACENOTE_SPA_PORT`
 
 ### Code Quality

@@ -43,6 +43,12 @@ agent-stop:
     -pkill -F .agent.pid 2>/dev/null || true
     -rm -f .agent.pid .agent.log
 
+# Frontend SPA commands
+spa:
+    #!/usr/bin/env bash
+    cd frontend
+    npm run dev
+
 db-reset:
     #!/usr/bin/env bash
     set -euo pipefail

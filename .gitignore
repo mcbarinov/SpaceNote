@@ -41,5 +41,11 @@ cookies-test.txt
 # File uploads
 attachments/
 
+# Frontend/Node.js
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/coverage/
+
 # Other
 tmp/
