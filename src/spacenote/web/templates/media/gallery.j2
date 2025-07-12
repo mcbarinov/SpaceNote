@@ -1,0 +1,276 @@
+{% extends "base.j2" %}
+
+{% block title %}Media Gallery - {{ space.name }}{% endblock %}
+
+{% block content %}
+<header>
+    <h1>📷 Media Gallery</h1>
+    <nav aria-label="Breadcrumb">
+        <a href="/spaces">Spaces</a> > 
+        <a href="/spaces/{{ space.id }}">{{ space.name }}</a> > 
+        <span>Media</span>
+    </nav>
+</header>
+
+<main>
+    <div class="media-controls">
+        <div class="filter-tabs">
+            <a href="/media/spaces/{{ space.id }}" 
+               class="tab{% if not current_category %} active{% endif %}">
+                All ({{ media_attachments|length }})
+            </a>
+            <a href="/media/spaces/{{ space.id }}?category=images" 
+               class="tab{% if current_category == 'images' %} active{% endif %}">
+                Images ({{ media_by_category['images']|length }})
+            </a>
+            <a href="/media/spaces/{{ space.id }}?category=videos" 
+               class="tab{% if current_category == 'videos' %} active{% endif %}">
+                Videos ({{ media_by_category['videos']|length }})
+            </a>
+            <a href="/media/spaces/{{ space.id }}?category=audio" 
+               class="tab{% if current_category == 'audio' %} active{% endif %}">
+                Audio ({{ media_by_category['audio']|length }})
+            </a>
+        </div>
+        
+        <div class="actions">
+            <a href="/attachments/spaces/{{ space.id }}" role="button">📎 All Attachments</a>
+        </div>
+    </div>
+
+    {% if media_attachments %}
+    <div class="media-grid">
+        {% for attachment in media_attachments %}
+            <div class="media-item" data-type="{{ attachment.media_category }}">
+                <div class="media-content">
+                    {% if attachment.media_category == 'images' %}
+                        <img src="/attachments/spaces/{{ space.id }}/preview/{{ attachment.id }}" 
+                             alt="{{ attachment.filename }}"
+                             loading="lazy"
+                             onclick="openMediaModal('{{ attachment.id }}', '{{ attachment.filename }}', 'image')">
+                    {% elif attachment.media_category == 'videos' %}
+                        <video controls preload="metadata">
+                            <source src="/attachments/spaces/{{ space.id }}/download/{{ attachment.id }}" 
+                                    type="{{ attachment.content_type }}">
+                            Your browser does not support the video tag.
+                        </video>
+                    {% elif attachment.media_category == 'audio' %}
+                        <div class="audio-placeholder">
+                            <span>🎵</span>
+                        </div>
+                        <audio controls>
+                            <source src="/attachments/spaces/{{ space.id }}/download/{{ attachment.id }}" 
+                                    type="{{ attachment.content_type }}">
+                            Your browser does not support the audio tag.
+                        </audio>
+                    {% endif %}
+                </div>
+                
+                <div class="media-info">
+                    <div class="filename">{{ attachment.filename }}</div>
+                    <div class="meta">
+                        <span class="size">{{ "%.1f"|format(attachment.size / 1024 / 1024) }}MB</span>
+                        <span class="author">by {{ attachment.author }}</span>
+                    </div>
+                    {% if attachment.note_id %}
+                        <div class="assignment">
+                            <a href="/notes/{{ space.id }}/{{ attachment.note_id }}">→ Note #{{ attachment.note_id }}</a>
+                        </div>
+                    {% else %}
+                        <div class="assignment unassigned">Unassigned</div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <div class="empty-state">
+            <h3>No media files found</h3>
+            <p>Upload some images, videos, or audio files to see them here.</p>
+            <a href="/attachments/spaces/{{ space.id }}" role="button">Upload Files</a>
+        </div>
+    {% endif %}
+</main>
+
+<!-- Media Modal -->
+<dialog id="media-modal">
+    <article>
+        <header>
+            <h3 id="modal-title"></h3>
+            <a href="#close" aria-label="Close" rel="prev" onclick="closeMediaModal()"></a>
+        </header>
+        <div id="modal-content"></div>
+    </article>
+</dialog>
+
+<style>
+.media-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tab {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--pico-color);
+    background: var(--pico-background-color);
+    transition: all 0.2s;
+}
+
+.tab:hover {
+    background: var(--pico-secondary-background);
+}
+
+.tab.active {
+    background: var(--pico-primary);
+    color: white;
+    border-color: var(--pico-primary);
+}
+
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.media-item {
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--pico-card-background-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.media-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.media-content {
+    position: relative;
+    background: var(--pico-muted-color);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.media-content img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.media-content video {
+    width: 100%;
+    max-height: 200px;
+}
+
+.media-content audio {
+    width: 100%;
+}
+
+.audio-placeholder {
+    font-size: 3rem;
+    color: var(--pico-muted-color);
+    margin-bottom: 1rem;
+}
+
+.media-info {
+    padding: 1rem;
+}
+
+.filename {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    word-break: break-word;
+}
+
+.meta {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--pico-muted-color);
+    margin-bottom: 0.5rem;
+}
+
+.assignment a {
+    color: var(--pico-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.assignment.unassigned {
+    color: var(--pico-muted-color);
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--pico-muted-color);
+}
+
+#media-modal img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+}
+
+@media (max-width: 768px) {
+    .media-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .media-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-tabs {
+        justify-content: center;
+    }
+}
+</style>
+
+<script>
+function openMediaModal(attachmentId, filename, type) {
+    const modal = document.getElementById('media-modal');
+    const title = document.getElementById('modal-title');
+    const content = document.getElementById('modal-content');
+    
+    title.textContent = filename;
+    
+    if (type === 'image') {
+        content.innerHTML = `<img src="/attachments/spaces/{{ space.id }}/download/${attachmentId}" alt="${filename}">`;
+    }
+    
+    modal.showModal();
+}
+
+function closeMediaModal() {
+    const modal = document.getElementById('media-modal');
+    modal.close();
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeMediaModal();
+    }
+});
+</script>
+{% endblock %}

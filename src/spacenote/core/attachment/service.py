@@ -8,7 +8,12 @@ from fastapi import UploadFile
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
-from spacenote.core.attachment.models import Attachment
+from spacenote.core.attachment.models import (
+    MEDIA_CATEGORIES,
+    Attachment,
+    MediaCategory,
+    get_attachment_category,
+)
 from spacenote.core.attachment.preview import generate_preview, get_preview_path, is_image
 from spacenote.core.core import Service
 from spacenote.core.errors import NotFoundError
@@ -158,8 +163,9 @@ class AttachmentService(Service):
                 shutil.move(str(old_preview_path), str(new_preview_path))
                 log.debug("preview_moved_with_attachment")
 
-        # Update the attachment count on the note
-        await self.core.services.note.increment_attachment_count(space_id, note_id)
+        # Update the attachment counts on the note
+        category = get_attachment_category(attachment.content_type)
+        await self.core.services.note.increment_attachment_counts(space_id, note_id, category)
 
         log.debug("attachment_assigned_to_note")
         return attachment
@@ -209,8 +215,9 @@ class AttachmentService(Service):
                 shutil.move(str(old_preview_path), str(new_preview_path))
                 log.debug("preview_moved_with_attachment")
 
-        # Update the attachment count on the old note
-        await self.core.services.note.decrement_attachment_count(space_id, old_note_id)
+        # Update the attachment counts on the old note
+        category = get_attachment_category(attachment.content_type)
+        await self.core.services.note.decrement_attachment_counts(space_id, old_note_id, category)
 
         log.debug("attachment_unassigned_from_note")
         return attachment
@@ -244,9 +251,10 @@ class AttachmentService(Service):
             else:
                 log.debug("preview_file_not_found", preview_path=str(preview_path))
 
-        # If attachment was assigned to a note, decrement the count
+        # If attachment was assigned to a note, decrement the counts
         if attachment.note_id is not None:
-            await self.core.services.note.decrement_attachment_count(space_id, attachment.note_id)
+            category = get_attachment_category(attachment.content_type)
+            await self.core.services.note.decrement_attachment_counts(space_id, attachment.note_id, category)
 
         # Delete the database record
         collection = self._collections[space_id]
@@ -258,6 +266,24 @@ class AttachmentService(Service):
         """Get attachments assigned to a specific note."""
         collection = self._collections[space_id]
         cursor = collection.find({"note_id": note_id}).sort("_id", -1)
+        return await Attachment.list_cursor(cursor)
+
+    async def get_media_attachments(self, space_id: str, category: MediaCategory | None = None) -> list[Attachment]:
+        """Get media attachments (images, videos, audio) for a space."""
+        collection = self._collections[space_id]
+
+        # Build query for media content types
+        if category and category in MEDIA_CATEGORIES:
+            # Get specific category
+            content_types = list(MEDIA_CATEGORIES[category])
+        else:
+            # Get all media types
+            content_types = []
+            for media_category in [MediaCategory.IMAGES, MediaCategory.VIDEOS, MediaCategory.AUDIO]:
+                content_types.extend(MEDIA_CATEGORIES[media_category])
+
+        query = {"content_type": {"$in": content_types}}
+        cursor = collection.find(query).sort("_id", -1)
         return await Attachment.list_cursor(cursor)
 
     async def drop_collection(self, space_id: str) -> None:

@@ -5,7 +5,8 @@ from typing import Any
 
 from fastapi import UploadFile
 
-from spacenote.core.attachment.models import Attachment
+from spacenote.core.attachment.models import Attachment, MediaCategory
+from spacenote.core.attachment.preview import get_preview_path
 from spacenote.core.comment.models import Comment
 from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
@@ -190,6 +191,13 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.attachment.get_space_attachments(space_id, unassigned_only)
 
+    async def get_media_attachments(
+        self, current_user: User, space_id: str, category: MediaCategory | None = None
+    ) -> list[Attachment]:
+        """Get media attachments (images, videos, audio) for a space."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.get_media_attachments(space_id, category)
+
     async def get_attachment(self, current_user: User, space_id: str, attachment_id: int) -> Attachment:
         """Get a specific attachment by ID."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
@@ -199,6 +207,17 @@ class App:
         """Get the file path for an attachment."""
         self._core.services.access.ensure_space_member(attachment.space_id, current_user.id)
         return self._core.services.attachment.get_file_path(attachment)
+
+    def get_attachment_preview_path(self, current_user: User, attachment: Attachment) -> Path:
+        """Get the preview file path for an attachment."""
+        self._core.services.access.ensure_space_member(attachment.space_id, current_user.id)
+
+        # Get the original file path and preview root
+        original_path = self._core.services.attachment.get_file_path(attachment)
+        preview_root = self._core.services.attachment.get_preview_root()
+
+        # Use the preview utility to get the preview path
+        return get_preview_path(original_path, preview_root)
 
     async def assign_attachment_to_note(self, current_user: User, space_id: str, attachment_id: int, note_id: int) -> Attachment:
         """Assign an attachment to a specific note."""
