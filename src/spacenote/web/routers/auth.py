@@ -1,11 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Form, Request, Response
+from fastapi import APIRouter, Depends, Form, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
 
+from spacenote.core.app import App
+from spacenote.core.user.models import SessionId
 from spacenote.web.class_based_view import cbv
-from spacenote.web.deps import AuthView
+from spacenote.web.deps import get_app, get_render, get_session_id
+from spacenote.web.render import Render
 from spacenote.web.utils import redirect
 
 router: APIRouter = APIRouter(prefix="")
@@ -17,14 +20,18 @@ class LoginForm(BaseModel):
 
 
 @cbv(router)
-class Auth(AuthView):
+class Auth:
+    app: App = Depends(get_app)
+    render: Render = Depends(get_render)
+    session_id: SessionId | None = Depends(get_session_id)
+
     @router.get("/", response_model=None)
     async def index(self) -> RedirectResponse:
         return redirect("/login")
 
     @router.get("/login", response_model=None)
     async def login_page(self) -> HTMLResponse | RedirectResponse:
-        if self.current_user:
+        if self.session_id:
             return redirect("/notes")
 
         return await self.render.html("login.j2")
@@ -56,7 +63,7 @@ class Auth(AuthView):
     async def logout(self, request: Request) -> RedirectResponse:
         session_id = request.cookies.get("session_id")
         if session_id:
-            await self.app.logout(session_id)
+            await self.app.logout(SessionId(session_id))
         response = RedirectResponse(url="/login", status_code=302)
         response.delete_cookie(key="session_id")
         return response

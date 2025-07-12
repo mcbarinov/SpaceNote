@@ -5,18 +5,18 @@ from fastapi.responses import HTMLResponse
 
 from spacenote.core.attachment.models import Attachment, MediaCategory
 from spacenote.web.class_based_view import cbv
-from spacenote.web.deps import View
+from spacenote.web.deps import SessionView
 
 router: APIRouter = APIRouter(prefix="/media")
 
 
 @cbv(router)
-class MediaPageRouter(View):
+class MediaPageRouter(SessionView):
     @router.get("/spaces/{space_id}")
     async def media_gallery(self, space_id: str, category: Annotated[MediaCategory | None, Query()] = None) -> HTMLResponse:
         """Display media gallery for a space."""
-        space = self.app.get_space(self.current_user, space_id)
-        media_attachments = await self.app.get_media_attachments(self.current_user, space_id, category)
+        space = await self.app.get_space(self.session_id, space_id)
+        media_attachments = await self.app.get_media_attachments(self.session_id, space_id, category)
 
         # Group media by category for display
         media_by_category: dict[str, list[Attachment]] = {

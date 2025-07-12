@@ -7,17 +7,17 @@ from pydantic import BaseModel
 from spacenote.core.field.models import FieldOption, FieldType, SpaceField
 from spacenote.core.filter.parsing import parse_raw_filter_data
 from spacenote.web.class_based_view import cbv
-from spacenote.web.deps import View
+from spacenote.web.deps import SessionView
 from spacenote.web.utils import redirect
 
 router: APIRouter = APIRouter(prefix="/spaces")
 
 
 @cbv(router)
-class SpacePageRouter(View):
+class SpacePageRouter(SessionView):
     @router.get("/")
     async def index(self) -> HTMLResponse:
-        spaces = self.app.get_spaces_by_member(self.current_user)
+        spaces = await self.app.get_spaces_by_member(self.session_id)
         return await self.render.html("spaces/index.j2", spaces=spaces)
 
     @router.get("/create")
@@ -26,38 +26,38 @@ class SpacePageRouter(View):
 
     @router.get("/{space_id}/fields")
     async def fields(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
+        space = await self.app.get_space(self.session_id, space_id)
         return await self.render.html("spaces/fields/index.j2", space=space)
 
     @router.get("/{space_id}/fields/create")
     async def create_field(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
+        space = await self.app.get_space(self.session_id, space_id)
         return await self.render.html("spaces/fields/create.j2", space=space)
 
     @router.get("/{space_id}/filters")
     async def filters(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
+        space = await self.app.get_space(self.session_id, space_id)
         return await self.render.html("spaces/filters/index.j2", space=space)
 
     @router.get("/{space_id}/filters/create")
     async def create_filter(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
+        space = await self.app.get_space(self.session_id, space_id)
         return await self.render.html("spaces/filters/create.j2", space=space)
 
     @router.get("/{space_id}/members")
     async def members(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
+        space = await self.app.get_space(self.session_id, space_id)
         return await self.render.html("spaces/members/index.j2", space=space)
 
     @router.get("/{space_id}/telegram")
     async def telegram_settings(self, space_id: str) -> HTMLResponse:
-        space = self.app.get_space(self.current_user, space_id)
-        bots = await self.app.get_telegram_bots(self.current_user)
+        space = await self.app.get_space(self.session_id, space_id)
+        bots = await self.app.get_telegram_bots(self.session_id)
         return await self.render.html("spaces/telegram/index.j2", space=space, bots=bots)
 
 
 @cbv(router)
-class SpaceActionRouter(View):
+class SpaceActionRouter(SessionView):
     class CreateSpaceForm(BaseModel):
         id: str
         name: str
@@ -99,26 +99,26 @@ class SpaceActionRouter(View):
 
     @router.post("/create")
     async def create_space(self, form: Annotated[CreateSpaceForm, Form()]) -> RedirectResponse:
-        space = await self.app.create_space(self.current_user, form.id, form.name)
+        space = await self.app.create_space(self.session_id, form.id, form.name)
         self.render.flash(f"Space '{space.id}' created successfully")
         return redirect("/spaces")
 
     @router.post("/{space_id}/fields/create")
     async def create_field(self, space_id: str, form: Annotated[CreateFieldForm, Form()]) -> RedirectResponse:
-        await self.app.add_field(self.current_user, space_id, form.to_model())
+        await self.app.add_field(self.session_id, space_id, form.to_model())
         return redirect(f"/spaces/{space_id}/fields")
 
     @router.post("/{space_id}/fields/update-list")
     async def update_list_fields(self, space_id: str, value: Annotated[str, Form()]) -> RedirectResponse:
         field_names = [name.strip() for name in value.strip().split(",") if name.strip()]
-        await self.app.update_list_fields(self.current_user, space_id, field_names)
+        await self.app.update_list_fields(self.session_id, space_id, field_names)
         self.render.flash("List fields updated successfully")
         return redirect(f"/spaces/{space_id}/fields")
 
     @router.post("/{space_id}/fields/update-hidden-create")
     async def update_hidden_create_fields(self, space_id: str, value: Annotated[str, Form()]) -> RedirectResponse:
         field_names = [name.strip() for name in value.strip().split(",") if name.strip()]
-        await self.app.update_hidden_create_fields(self.current_user, space_id, field_names)
+        await self.app.update_hidden_create_fields(self.session_id, space_id, field_names)
         self.render.flash("Hidden create fields updated successfully")
         return redirect(f"/spaces/{space_id}/fields")
 
@@ -126,13 +126,13 @@ class SpaceActionRouter(View):
     async def create_filter(self, space_id: str, request: Request) -> RedirectResponse:
         form_data = dict(await request.form())
         filter_model = parse_raw_filter_data(form_data)
-        await self.app.add_filter(self.current_user, space_id, filter_model)
+        await self.app.add_filter(self.session_id, space_id, filter_model)
         self.render.flash(f"Filter '{filter_model.title}' created successfully")
         return redirect(f"/spaces/{space_id}/filters")
 
     @router.post("/{space_id}/filters/{filter_id}/delete")
     async def delete_filter(self, space_id: str, filter_id: str) -> RedirectResponse:
-        await self.app.delete_filter(self.current_user, space_id, filter_id)
+        await self.app.delete_filter(self.session_id, space_id, filter_id)
         self.render.flash(f"Filter '{filter_id}' deleted successfully")
         return redirect(f"/spaces/{space_id}/filters")
 
@@ -140,7 +140,7 @@ class SpaceActionRouter(View):
     async def update_members(self, space_id: str, members: Annotated[str, Form()]) -> RedirectResponse:
         # Parse comma-separated usernames
         member_list = [username.strip() for username in members.split(",") if username.strip()]
-        await self.app.update_space_members(self.current_user, space_id, member_list)
+        await self.app.update_space_members(self.session_id, space_id, member_list)
         self.render.flash("Members updated successfully")
         return redirect(f"/spaces/{space_id}/members")
 
@@ -149,6 +149,6 @@ class SpaceActionRouter(View):
         form_data = dict(await request.form())
         # Convert form data to string dict
         telegram_config = {k: str(v) for k, v in form_data.items()}
-        await self.app.update_space_telegram_config(self.current_user, space_id, telegram_config)
+        await self.app.update_space_telegram_config(self.session_id, space_id, telegram_config)
         self.render.flash("Telegram configuration updated successfully")
         return redirect(f"/spaces/{space_id}/telegram")

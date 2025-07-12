@@ -7,6 +7,13 @@ class NotFoundError(UserError):
         super().__init__(message)
 
 
+class AuthenticationError(UserError):
+    """Raised when authentication fails."""
+
+    def __init__(self, message: str = "Authentication failed") -> None:
+        super().__init__(message)
+
+
 class AccessDeniedError(UserError):
     """Raised when a user tries to access a resource they do not have permission for."""
 

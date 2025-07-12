@@ -3,14 +3,16 @@ import logging
 from fastapi import Request
 from fastapi.responses import HTMLResponse, Response
 
-from spacenote.web.deps import get_render
+from spacenote.web.deps import get_app, get_render, get_session_id
 
 logger = logging.getLogger(__name__)
 
 
 async def render_error_page(request: Request, status_code: int, title: str, message: str) -> HTMLResponse:
     """Render error page using the standalone error template."""
-    render = await get_render(request, None)
+    session_id = await get_session_id(request)
+    app = await get_app(request)
+    render = await get_render(request, session_id, app)
     return await render.html("error.j2", status_code=status_code, title=title, message=message)
 
 
