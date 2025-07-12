@@ -360,6 +360,35 @@ await app.create_note(current_user, space_id, fields)
 - Login returns session ID
 - Session lookup for authentication
 
+## Dual Web Version Strategy (Prototyping Phase)
+
+During the prototyping phase, SpaceNote supports two parallel web implementations:
+
+### Legacy Version (SSR)
+- **Status**: Current server-side rendering implementation
+- **Development**: Continues unchanged, ongoing feature development
+- **Location**: `spacenote/web/` directory
+- **Technology**: FastAPI + Jinja2 templates + Pico CSS
+- **Port**: Standard `SPACENOTE_PORT` (default behavior)
+- **Approach**: No migration or changes - maintain and extend existing functionality
+
+### New SPA Version
+- **Status**: Modern single-page application implementation
+- **Development**: Built from scratch in parallel
+- **Location**: `/frontend` directory (top-level)
+- **Technology Stack**:
+  - **TypeScript**: Type-safe JavaScript
+  - **React**: Component-based UI framework
+  - **Zustand**: State management library
+- **Port**: Separate `SPACENOTE_SPA_PORT` environment variable
+- **API**: Will consume new REST endpoints with `/new-api/` prefix
+
+### Development Strategy
+- **Parallel Development**: Both versions evolve simultaneously
+- **No Migration**: Legacy version remains untouched during SPA development
+- **Future Planning**: SPA may eventually replace legacy when fully featured
+- **Flexibility**: Directory structure may change as requirements evolve
+
 ## Technology Stack
 
 ### Core Technologies
@@ -367,6 +396,18 @@ await app.create_note(current_user, space_id, fields)
 - **Database**: MongoDB
 - **Models**: Pydantic v2
 - **Framework**: FastAPI
+
+### Legacy Web (SSR)
+- **Templates**: Jinja2
+- **Styling**: Pico CSS
+- **Architecture**: Server-side rendering
+
+### New SPA Web
+- **Language**: TypeScript
+- **Framework**: React
+- **State Management**: Zustand
+- **Build Tool**: TBD
+- **Port**: `SPACENOTE_SPA_PORT`
 
 ### Code Quality
 - **Linting**: Ruff (actively used)
