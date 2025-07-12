@@ -4,11 +4,11 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from spacenote.core.attachment.service import AttachmentService
+    pass
 
-from spacenote.core.attachment.models import ATTACHMENT_CATEGORIES, AttachmentCategory
 from spacenote.core.field.models import FieldOption, FieldType, FieldValueType, SpaceField
 from spacenote.core.space.models import Space
+from spacenote.core.special.models import SpecialValue
 
 
 class FieldValidator(ABC):
@@ -158,8 +158,8 @@ class UserValidator(FieldValidator):
     """Validator for USER fields."""
 
     def validate_configuration(self, field: SpaceField) -> None:
-        if field.default is not None and not isinstance(field.default, str):
-            raise ValueError("USER field default must be a string (user ID)")
+        if field.default is not None and field.default not in [SpecialValue.CURRENT_USER] and not isinstance(field.default, str):
+            raise ValueError("USER field default must be a string (user ID) or @me")
 
     def validate_value(self, _field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -291,38 +291,17 @@ class ImageValidator(FieldValidator):
     """Validator for IMAGE fields."""
 
     def validate_configuration(self, field: SpaceField) -> None:
-        if field.default is not None and not isinstance(field.default, int):
-            raise ValueError("IMAGE field default must be an integer (attachment_id)")
+        if field.default is not None and field.default not in [SpecialValue.LAST] and not isinstance(field.default, int):
+            raise ValueError("IMAGE field default must be an integer (attachment_id) or @last")
 
-    def validate_value(self, field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValueType:
+    def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
             return None
-
-        # Check that context with unassigned_attachments is provided
-        if not context or "unassigned_attachments" not in context:
-            raise ValueError("ImageValidator requires 'unassigned_attachments' in context")
 
         try:
             attachment_id = int(raw_value)
         except ValueError:
             raise ValueError(f"Invalid attachment ID '{raw_value}' for field '{field.name}'") from None
-
-        unassigned_attachments = context["unassigned_attachments"]
-        space_id = context["space_id"]
-
-        # Find the attachment in unassigned attachments
-        attachment = None
-        for att in unassigned_attachments:
-            if att.id == attachment_id:
-                attachment = att
-                break
-
-        if attachment is None:
-            raise ValueError(f"Attachment {attachment_id} not found or already assigned in space {space_id}")
-
-        # Check if attachment is an image
-        if attachment.content_type not in ATTACHMENT_CATEGORIES[AttachmentCategory.IMAGES]:
-            raise ValueError(f"Attachment {attachment_id} is not an image (content type: {attachment.content_type})")
 
         return attachment_id
 
@@ -364,14 +343,15 @@ def validate_field_configuration(field: SpaceField) -> None:
 
 
 async def validate_note_fields(
-    space: Space, field_values: dict[str, str], attachment_service: "AttachmentService | None" = None, skip_missing: bool = False
+    space: Space,
+    field_values: dict[str, str],
+    skip_missing: bool = False,
 ) -> dict[str, FieldValueType]:
     """Validate and convert field values for a note based on space field definitions.
 
     Args:
         space: The space containing field definitions
         field_values: Raw field values from the form
-        attachment_service: Service for accessing attachments (required for IMAGE fields)
         skip_missing: If True, missing fields will use their default values (for hidden fields)
     """
 
@@ -382,11 +362,6 @@ async def validate_note_fields(
         "members": space.members,
         "space_id": space.id,
     }
-
-    # Add unassigned attachments to context if attachment_service is provided
-    if attachment_service:
-        unassigned_attachments = await attachment_service.get_space_attachments(space.id, unassigned_only=True)
-        validation_context["unassigned_attachments"] = unassigned_attachments
 
     for field in space.fields:
         field_name = field.name

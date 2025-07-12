@@ -140,7 +140,7 @@ class App:
     ) -> Note:
         """Update an existing note from raw field values (validates and converts)."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
-        return await self._core.services.note.update_note_from_raw_fields(space_id, note_id, raw_fields)
+        return await self._core.services.note.update_note_from_raw_fields(space_id, note_id, raw_fields, current_user.id)
 
     async def delete_space(self, current_user: User, space_id: str) -> None:
         """Delete a space and all its associated data (notes, comments). Admin only."""

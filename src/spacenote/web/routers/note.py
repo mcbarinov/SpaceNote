@@ -82,6 +82,7 @@ class NoteActionRouter(View):
     @router.post("/{space_id}/create")
     async def create_note(self, space_id: str, request: Request) -> RedirectResponse:
         form_data = await request.form()
+        space = self.app.get_space(self.current_user, space_id)
 
         raw_fields = {}
         for key, value in form_data.items():
@@ -89,9 +90,16 @@ class NoteActionRouter(View):
                 field_name = key[6:]  # Remove "field_" prefix
                 # Convert UploadFile to string if needed
                 if isinstance(value, str):
-                    raw_fields[field_name] = value
+                    field_value = value
                 else:
-                    raw_fields[field_name] = ""
+                    field_value = ""
+
+                # Skip empty fields that have default values - let them use defaults
+                field_def = space.get_field(field_name)
+                if field_def and field_def.default is not None and not field_value:
+                    continue
+
+                raw_fields[field_name] = field_value
 
         await self.app.create_note_from_raw_fields(self.current_user, space_id, raw_fields)
         self.render.flash("Note created successfully")

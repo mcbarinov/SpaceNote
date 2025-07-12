@@ -8,9 +8,9 @@ import structlog
 from pymongo.asynchronous.collection import AsyncCollection
 from pymongo.asynchronous.database import AsyncDatabase
 
-from spacenote.core.attachment.models import AttachmentCategory
+from spacenote.core.attachment.models import ATTACHMENT_CATEGORIES, AttachmentCategory
 from spacenote.core.core import Service
-from spacenote.core.field.models import FieldType
+from spacenote.core.field.models import FieldType, FieldValueType
 from spacenote.core.field.validators import validate_note_fields
 from spacenote.core.filter.mongo import build_mongodb_query, build_sort_spec
 from spacenote.core.note.models import Note, PaginationResult
@@ -35,6 +35,39 @@ class NoteService(Service):
         for space in self.core.services.space.get_spaces():
             self._collections[space.id] = self.database.get_collection(f"{space.id}_notes")
         logger.debug("note_service_started", collections_count=len(self._collections))
+
+    async def resolve_and_validate_fields(
+        self, space: "Space", validated_fields: dict[str, FieldValueType], current_user: User
+    ) -> dict[str, FieldValueType]:
+        """Resolve special values and validate field constraints after initial validation."""
+        # Step 1: Resolve special values using SpecialService
+        resolved_fields = await self.core.services.special.resolve_field_values(space, validated_fields, current_user)
+
+        # Step 2: Additional validation for IMAGE fields
+        for field in space.fields:
+            field_name = field.name
+            if (
+                field.type == FieldType.IMAGE
+                and resolved_fields[field_name] is not None
+                and isinstance(resolved_fields[field_name], int)
+            ):
+                attachment_id: int = resolved_fields[field_name]  # type: ignore[assignment]
+                await self._validate_image_attachment(space.id, attachment_id)
+
+        return resolved_fields
+
+    async def _validate_image_attachment(self, space_id: str, attachment_id: int) -> None:
+        """Validate that an attachment exists, is unassigned, and is an image."""
+        try:
+            attachment = await self.core.services.attachment.get_attachment(space_id, attachment_id)
+        except ValueError as e:
+            raise ValueError(f"Attachment {attachment_id} not found in space {space_id}") from e
+
+        if attachment.note_id is not None:
+            raise ValueError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
+
+        if attachment.content_type not in ATTACHMENT_CATEGORIES[AttachmentCategory.IMAGES]:
+            raise ValueError(f"Attachment {attachment_id} is not an image (content type: {attachment.content_type})")
 
     async def list_notes(
         self, space_id: str, filter_id: str | None = None, current_user: User | None = None, page: int = 1, page_size: int = 20
@@ -91,16 +124,23 @@ class NoteService(Service):
         last_note = await self._collections[space_id].find({}).sort("_id", -1).limit(1).to_list(1)
         next_id = 1 if not last_note else last_note[0]["_id"] + 1
 
+        # Step 1: Basic validation (pure function)
+        validated_fields = await validate_note_fields(space, raw_fields, skip_missing=True)
+
+        # Step 2: Resolve special values and validate constraints (service layer)
+        current_user = self.core.services.user.get_user(author)
+        resolved_fields = await self.resolve_and_validate_fields(space, validated_fields, current_user)
+
         note = Note(
             id=next_id,
             author=author,
             created_at=datetime.now(UTC),
-            fields=await validate_note_fields(space, raw_fields, self.core.services.attachment, skip_missing=True),
+            fields=resolved_fields,
         )
         await self._collections[space_id].insert_one(note.to_dict())
 
         # Assign IMAGE field attachments to this note
-        await self._assign_image_attachments(space, note)
+        await self._assign_image_attachments(space, note.id, resolved_fields)
 
         log.debug("note_created", note_id=note.id)
 
@@ -138,20 +178,26 @@ class NoteService(Service):
         }
         await self._collections[space_id].update_one({"_id": note_id}, {"$inc": update_fields})
 
-    async def update_note_from_raw_fields(self, space_id: str, note_id: int, raw_fields: dict[str, str]) -> Note:
+    async def update_note_from_raw_fields(self, space_id: str, note_id: int, raw_fields: dict[str, str], author: str) -> Note:
         """Update an existing note in a space from raw field values (validates and converts)."""
         log = logger.bind(space_id=space_id, note_id=note_id, action="update_note")
         log.debug("updating_note")
 
         space = self.core.services.space.get_space(space_id)
-        validated_fields = await validate_note_fields(space, raw_fields, self.core.services.attachment, skip_missing=False)
+
+        # Step 1: Basic validation (pure function)
+        validated_fields = await validate_note_fields(space, raw_fields, skip_missing=False)
+
+        # Step 2: Resolve special values and validate constraints (service layer)
+        current_user = self.core.services.user.get_user(author)
+        resolved_fields = await self.resolve_and_validate_fields(space, validated_fields, current_user)
+
         await self._collections[space_id].update_one(
-            {"_id": note_id}, {"$set": {"fields": validated_fields, "edited_at": datetime.now(UTC)}}
+            {"_id": note_id}, {"$set": {"fields": resolved_fields, "edited_at": datetime.now(UTC)}}
         )
 
-        # Create a temporary note object to pass to _assign_image_attachments
-        updated_note = Note(id=note_id, author="", created_at=datetime.now(UTC), fields=validated_fields)
-        await self._assign_image_attachments(space, updated_note)
+        # Assign IMAGE field attachments to this note
+        await self._assign_image_attachments(space, note_id, resolved_fields)
 
         log.debug("note_updated")
 
@@ -204,22 +250,22 @@ class NoteService(Service):
             raise ValueError(f"Collection for space '{space_id}' does not exist")
         return await self._collections[space_id].count_documents({})
 
-    async def _assign_image_attachments(self, space: "Space", note: Note) -> None:
+    async def _assign_image_attachments(self, space: "Space", note_id: int, resolved_fields: dict[str, FieldValueType]) -> None:
         """Assign image attachments to a note based on IMAGE field values."""
         # Find all IMAGE fields in the space
         image_fields = [field for field in space.fields if field.type == FieldType.IMAGE]
 
         for field in image_fields:
-            field_value = note.fields.get(field.name)
+            field_value = resolved_fields.get(field.name)
             if field_value is not None and isinstance(field_value, int):
                 try:
                     # Assign the attachment to this note
-                    await self.core.services.attachment.assign_to_note(space.id, field_value, note.id)
+                    await self.core.services.attachment.assign_to_note(space.id, field_value, note_id)
                 except Exception as e:
                     logger.warning(
                         "failed_to_assign_image_attachment",
                         space_id=space.id,
-                        note_id=note.id,
+                        note_id=note_id,
                         attachment_id=field_value,
                         error=str(e),
                     )

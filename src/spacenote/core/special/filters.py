@@ -1,13 +1,8 @@
-from enum import StrEnum
-
 from spacenote.core.field.models import FieldType
 from spacenote.core.filter.models import Filter, FilterCondition
 from spacenote.core.space.models import Space
+from spacenote.core.special.models import SpecialValue
 from spacenote.core.user.models import User
-
-
-class SpecialValue(StrEnum):
-    CURRENT_USER = "@me"
 
 
 def resolve_special_values(filter: Filter, space: Space, current_user: User | None) -> Filter:

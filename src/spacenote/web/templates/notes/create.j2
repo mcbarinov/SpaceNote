@@ -54,7 +54,7 @@
                placeholder="Comma-separated tags" {% if field.required %}required{% endif %}>
       
       {% elif field.type == "user" %}
-        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required and not field.default %}required{% endif %}>
           <option value="">Select user...</option>
           {% for member in space.members %}
             <option value="{{member}}" {% if field.default == member %}selected{% endif %}>{{member}}</option>
@@ -80,7 +80,7 @@
                {% if field.required %}required{% endif %}>
       
       {% elif field.type == "image" %}
-        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required %}required{% endif %}>
+        <select name="field_{{field.name}}" id="field_{{field.name}}" {% if field.required and not field.default %}required{% endif %}>
           <option value="">Select image...</option>
           {% for attachment in unassigned_image_attachments %}
             <option value="{{attachment.id}}" {% if field.default == attachment.id %}selected{% endif %}>

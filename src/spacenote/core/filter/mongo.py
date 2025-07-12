@@ -2,8 +2,8 @@ from typing import Any
 
 from spacenote.core.field.models import FieldValueType
 from spacenote.core.filter.models import Filter, FilterCondition, FilterOperator
-from spacenote.core.filter.special_values import resolve_special_values
 from spacenote.core.space.models import Space
+from spacenote.core.special.filters import resolve_special_values
 from spacenote.core.user.models import User
 
 

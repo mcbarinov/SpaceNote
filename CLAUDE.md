@@ -111,6 +111,25 @@ When writing web route handlers:
 - Services will raise appropriate exceptions that FastAPI will handle
 - Follow minimalism principle during prototyping phase
 
+## Service Access Guidelines
+
+**CRITICAL RULE**: Services can ONLY be accessed through `core.services.*` objects:
+
+- ✅ **Correct**: `self.core.services.attachment.get_attachment()`
+- ❌ **FORBIDDEN**: Passing services as parameters to pure functions
+- ❌ **FORBIDDEN**: `validate_note_fields(space, fields, attachment_service=service)`
+
+**Pure functions** (in modules like `field/validators.py`) must:
+- Work only with simple data types (strings, dicts, models)
+- Never receive services as parameters
+- Never access `self.core` or any service objects
+- Be truly "pure" - same input always produces same output
+
+**Service layer** responsibilities:
+- Access other services through `self.core.services.*`
+- Handle business logic that requires service interactions
+- Call pure functions with prepared data
+
 ## Documentation Writing Guidelines
 
 When writing `docs/architecture.md`:
