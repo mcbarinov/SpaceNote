@@ -86,6 +86,7 @@ Fields define the structure of notes within a space. Supported field types:
 - `TAGS`: Multiple string values for categorization
 - `USER`: Reference to space members
 - `DATETIME`: Date and time values
+- `IMAGE`: Reference to image attachment (int: attachment_id)
 
 ### Filters
 Filters enable custom views of notes with specific conditions, sorting, and field display:
@@ -158,6 +159,13 @@ File System Structure:
       filename__{id}.ext
     /{note_id}/                # Files assigned to specific notes
       filename__{id}.ext
+
+{attachments_path}_preview/
+  /{space_id}/
+    /__unassigned__/           # Image previews for unassigned files
+      filename__{id}.ext
+    /{note_id}/                # Image previews for assigned files
+      filename__{id}.ext
 ```
 
 File Naming Convention:
@@ -186,6 +194,25 @@ Per-Space Collections:
 - `{space_id}_attachments` - attachment metadata for each space
 - Follows existing pattern of space-isolated collections
 - Auto-incremented IDs within each space (like notes and comments)
+
+**Image Previews**
+
+For image attachments, preview files are automatically generated:
+- **Storage**: Parallel structure in `{attachments_path}_preview/`
+- **Generation**: Automatic background processing on image upload
+- **Specifications**: Max 800px width/height, 85% JPEG quality
+- **Formats**: JPEG, PNG, WebP, GIF (first frame)
+- **Naming**: Mirrors original attachment naming convention
+- **Purpose**: Fast loading for web interfaces and external integrations
+
+**IMAGE Field Type**
+
+Specialized field type for displaying images within notes:
+- **Value**: `int` (attachment_id referencing image attachment)
+- **Validation**: Referenced attachment must exist in same space and be image type
+- **Display**: Shows preview thumbnail with click-to-enlarge
+- **Selection**: Choose from available image attachments in space
+- **Difference from ATTACHMENT**: Optimized for visual display vs general file handling
 
 **Access Control**
 
