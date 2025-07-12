@@ -1,5 +1,8 @@
 from datetime import UTC, datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from spacenote.core.space.models import Space
 
 import structlog
 from pymongo.asynchronous.collection import AsyncCollection
@@ -7,6 +10,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.attachment.models import AttachmentCategory
 from spacenote.core.core import Service
+from spacenote.core.field.models import FieldType
 from spacenote.core.field.validators import validate_note_fields
 from spacenote.core.filter.mongo import build_mongodb_query, build_sort_spec
 from spacenote.core.note.models import Note, PaginationResult
@@ -91,9 +95,12 @@ class NoteService(Service):
             id=next_id,
             author=author,
             created_at=datetime.now(UTC),
-            fields=validate_note_fields(space, raw_fields, skip_missing=True),
+            fields=await validate_note_fields(space, raw_fields, self.core.services.attachment, skip_missing=True),
         )
         await self._collections[space_id].insert_one(note.to_dict())
+
+        # Assign IMAGE field attachments to this note
+        await self._assign_image_attachments(space, note)
 
         log.debug("note_created", note_id=note.id)
 
@@ -137,10 +144,14 @@ class NoteService(Service):
         log.debug("updating_note")
 
         space = self.core.services.space.get_space(space_id)
-        validated_fields = validate_note_fields(space, raw_fields, skip_missing=False)
+        validated_fields = await validate_note_fields(space, raw_fields, self.core.services.attachment, skip_missing=False)
         await self._collections[space_id].update_one(
             {"_id": note_id}, {"$set": {"fields": validated_fields, "edited_at": datetime.now(UTC)}}
         )
+
+        # Create a temporary note object to pass to _assign_image_attachments
+        updated_note = Note(id=note_id, author="", created_at=datetime.now(UTC), fields=validated_fields)
+        await self._assign_image_attachments(space, updated_note)
 
         log.debug("note_updated")
 
@@ -192,3 +203,23 @@ class NoteService(Service):
         if space_id not in self._collections:
             raise ValueError(f"Collection for space '{space_id}' does not exist")
         return await self._collections[space_id].count_documents({})
+
+    async def _assign_image_attachments(self, space: "Space", note: Note) -> None:
+        """Assign image attachments to a note based on IMAGE field values."""
+        # Find all IMAGE fields in the space
+        image_fields = [field for field in space.fields if field.type == FieldType.IMAGE]
+
+        for field in image_fields:
+            field_value = note.fields.get(field.name)
+            if field_value is not None and isinstance(field_value, int):
+                try:
+                    # Assign the attachment to this note
+                    await self.core.services.attachment.assign_to_note(space.id, field_value, note.id)
+                except Exception as e:
+                    logger.warning(
+                        "failed_to_assign_image_attachment",
+                        space_id=space.id,
+                        note_id=note.id,
+                        attachment_id=field_value,
+                        error=str(e),
+                    )

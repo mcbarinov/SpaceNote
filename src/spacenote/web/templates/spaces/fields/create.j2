@@ -42,6 +42,8 @@ document.getElementById('field-type').addEventListener('change', function() {
       defaultInput.placeholder = 'Default (true/false)';
     } else if (fieldType === 'tags') {
       defaultInput.placeholder = 'Default tags (one per line)';
+    } else if (fieldType === 'image') {
+      defaultInput.placeholder = 'Default attachment ID (optional)';
     } else {
       defaultInput.placeholder = 'Default';
     }

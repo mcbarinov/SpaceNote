@@ -11,7 +11,7 @@ FieldOptionValueType = list[str] | int | float
 # - str: for STRING, MARKDOWN, CHOICE, USER, DATETIME fields
 # - bool: for BOOLEAN fields
 # - list[str]: for TAGS fields
-# - int: for INT fields
+# - int: for INT fields and IMAGE fields (attachment_id)
 # - float: for FLOAT fields
 # - None: for empty/unset fields
 FieldValueType = str | bool | list[str] | int | float | None
@@ -27,6 +27,7 @@ class FieldType(StrEnum):
     DATETIME = "datetime"  # Date and time selection
     INT = "int"  # Integer numeric values
     FLOAT = "float"  # Floating-point numeric values
+    IMAGE = "image"  # Image attachment reference (attachment_id)
     # ATTACHMENT = "attachment"  # File attachments
 
 
