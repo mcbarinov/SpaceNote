@@ -1,5 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Any
 
 from fastapi import UploadFile
@@ -188,6 +189,16 @@ class App:
         """Get attachments for a space."""
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.attachment.get_space_attachments(space_id, unassigned_only)
+
+    async def get_attachment(self, current_user: User, space_id: str, attachment_id: int) -> Attachment:
+        """Get a specific attachment by ID."""
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        return await self._core.services.attachment.get_attachment(space_id, attachment_id)
+
+    def get_attachment_file_path(self, current_user: User, attachment: Attachment) -> Path:
+        """Get the file path for an attachment."""
+        self._core.services.access.ensure_space_member(attachment.space_id, current_user.id)
+        return self._core.services.attachment.get_file_path(attachment)
 
     # Telegram Bot Management (Admin only)
     async def create_telegram_bot(self, current_user: User, bot_id: str, token: str) -> TelegramBot:

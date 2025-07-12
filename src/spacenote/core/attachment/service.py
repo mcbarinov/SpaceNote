@@ -10,6 +10,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.attachment.models import Attachment
 from spacenote.core.core import Service
+from spacenote.core.errors import NotFoundError
 
 logger = structlog.get_logger(__name__)
 
@@ -93,11 +94,13 @@ class AttachmentService(Service):
         cursor = collection.find(query).sort("_id", -1)
         return await Attachment.list_cursor(cursor)
 
-    async def get_attachment(self, space_id: str, attachment_id: int) -> Attachment | None:
+    async def get_attachment(self, space_id: str, attachment_id: int) -> Attachment:
         """Get a specific attachment by ID."""
         collection = self._collections[space_id]
         doc = await collection.find_one({"_id": attachment_id})
-        return Attachment.model_validate(doc) if doc else None
+        if not doc:
+            raise NotFoundError(f"Attachment '{attachment_id}' not found in space '{space_id}'")
+        return Attachment.model_validate(doc)
 
     def get_file_path(self, attachment: Attachment) -> Path:
         """Get the full file system path for an attachment."""
