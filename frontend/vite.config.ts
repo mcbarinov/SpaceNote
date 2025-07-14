@@ -5,8 +5,14 @@ import path from "path"
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: parseInt(process.env.SPACENOTE_SPA_PORT || "3001"),
+    port: parseInt(process.env["SPACENOTE_SPA_PORT"] ?? "3001"),
     host: true,
+    proxy: {
+      "/new-api": {
+        target: `http://localhost:${process.env["SPACENOTE_PORT"] ?? "3000"}`,
+        changeOrigin: true,
+      },
+    },
   },
   build: {
     outDir: "dist",

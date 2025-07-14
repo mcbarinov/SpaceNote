@@ -382,6 +382,7 @@ During the prototyping phase, SpaceNote supports two parallel web implementation
   - **Zustand**: State management library
 - **Port**: Separate `SPACENOTE_SPA_PORT` environment variable
 - **API**: Will consume new REST endpoints with `/new-api/` prefix
+- **Backend Structure**: Separate router files in `spacenote/web/spa_routers/` directory
 
 ### Development Strategy
 - **Parallel Development**: Both versions evolve simultaneously

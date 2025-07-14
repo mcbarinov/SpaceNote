@@ -36,6 +36,16 @@ All content must be in English:
 - We are NOT writing tests at this stage
 - Focus is on rapid iteration and exploration
 
+## Shell Configuration
+
+**Important**: To avoid conflicts with user's zsh customizations (like zoxide), always use bash for commands:
+
+```bash
+SHELL=/bin/bash bash -c 'cd /path/to/directory && command'
+```
+
+This prevents issues with custom zsh configurations that may interfere with directory navigation.
+
 ## Code Quality Checks
 
 After making any code changes, you MUST run linters to ensure code quality:
@@ -88,10 +98,13 @@ from module.x import SomeClass
 
 ### Human Development
 - `just dev` - Start development server (human use only)
+- `just spa` - Start SPA development server (human use only)
 
 ### AI Agent Operations
-- `just agent-start` - Start AI agent
-- `just agent-stop` - Stop AI agent
+- `just agent-start` - Start AI agent backend server (port 8001)
+- `just agent-stop` - Stop AI agent backend server
+- `just spa-agent-start` - Start AI agent SPA server (port 8002)
+- `just spa-agent-stop` - Stop AI agent SPA server
 
 ## Template Writing Guidelines
 

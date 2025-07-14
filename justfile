@@ -43,6 +43,15 @@ agent-stop:
     -pkill -F .agent.pid 2>/dev/null || true
     -rm -f .agent.pid .agent.log
 
+spa-agent-start:
+    #!/usr/bin/env bash
+    cd frontend
+    SPACENOTE_SPA_PORT=8002 SPACENOTE_PORT=8001 npm run dev > ../.spa-agent.log 2>&1 & echo $! > ../.spa-agent.pid
+
+spa-agent-stop:
+    -pkill -F .spa-agent.pid 2>/dev/null || true
+    -rm -f .spa-agent.pid .spa-agent.log
+
 # Frontend SPA commands
 spa:
     #!/usr/bin/env bash
