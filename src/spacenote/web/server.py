@@ -25,6 +25,7 @@ from spacenote.web.routers.note import router as note_router
 from spacenote.web.routers.profile import router as profile_router
 from spacenote.web.routers.space import router as space_router
 from spacenote.web.spa_routers.auth import router as spa_auth_router
+from spacenote.web.spa_routers.spaces import router as spa_spaces_router
 
 
 def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
@@ -57,6 +58,7 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     app.include_router(profile_router)
     app.include_router(api_router)
     app.include_router(spa_auth_router)
+    app.include_router(spa_spaces_router)
 
     # Register error handlers
     app.add_exception_handler(AccessDeniedError, access_denied_handler)

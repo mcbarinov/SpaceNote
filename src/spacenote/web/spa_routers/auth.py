@@ -29,6 +29,8 @@ class MeResponse(BaseModel):
 
 @cbv(router)
 class SpaAuth:
+    """Auth endpoints that don't require authentication (or handle optional authentication)."""
+
     app: App = Depends(get_app)
     session_id: SessionId | None = Depends(get_session_id)
 
