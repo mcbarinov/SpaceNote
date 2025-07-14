@@ -30,6 +30,8 @@ htmlcov/
 # Agent process management
 .agent.pid
 .agent.log
+.spa-agent.log
+.spa-agent.pid
 
 # Session/Cookie files
 cookies.txt
@@ -46,6 +48,7 @@ node_modules/
 frontend/dist/
 frontend/.vite/
 frontend/coverage/
+frontend/tsconfig.tsbuildinfo
 
 # Other
 tmp/

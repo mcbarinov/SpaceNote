@@ -3,7 +3,6 @@ import { LoginForm } from "./components/LoginForm"
 import { AdminPage } from "./components/AdminPage"
 import { NotesPage } from "./components/NotesPage"
 import { SpacesPage } from "./components/SpacesPage"
-import { ProfilePage } from "./components/ProfilePage"
 import { ProtectedRoute } from "./components/ProtectedRoute"
 import { useAuthStore } from "./stores/auth"
 
@@ -24,7 +23,6 @@ function App() {
         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
         <Route path="/spaces" element={<ProtectedRoute><SpacesPage /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
-        <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

@@ -27,6 +27,15 @@ class MeResponse(BaseModel):
     user: dict[str, str] | None
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class ChangePasswordResponse(BaseModel):
+    success: bool
+
+
 @cbv(router)
 class SpaAuth:
     """Auth endpoints that don't require authentication (or handle optional authentication)."""
@@ -75,3 +84,16 @@ class SpaAuth:
             return MeResponse(user=None)
 
         return MeResponse(user={"id": user.id})
+
+    @router.post("/auth/change-password")
+    async def change_password(self, request_data: ChangePasswordRequest) -> ChangePasswordResponse:
+        if not self.session_id:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        try:
+            await self.app.change_password(self.session_id, request_data.current_password, request_data.new_password)
+            return ChangePasswordResponse(success=True)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Failed to change password") from e

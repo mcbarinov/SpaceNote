@@ -34,7 +34,7 @@ export function LoginForm() {
       <Card className="w-full max-w-md p-6">
         <h1 className="text-2xl font-semibold text-center mb-6">Sign in to SpaceNote</h1>
         <form onSubmit={onSubmit} className="space-y-4">
-          <Input name="username" placeholder="Username" autoComplete="username" required />
+          <Input name="username" placeholder="Username" autoComplete="username" autoFocus required />
           <Input name="password" type="password" placeholder="Password" autoComplete="current-password" required />
           {error && <p className="text-sm text-red-600 text-center">{error}</p>}
           <Button type="submit" disabled={isLoading} className="w-full">
