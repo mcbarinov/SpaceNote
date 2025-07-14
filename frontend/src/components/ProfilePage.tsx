@@ -1,4 +1,4 @@
-import { Layout } from "./Layout"
+import { Layout } from "./layout/Layout"
 import { UnderConstruction } from "./UnderConstruction"
 
 export function ProfilePage() {

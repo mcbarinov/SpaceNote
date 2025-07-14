@@ -1,5 +1,5 @@
 import { useAuthStore } from "../stores/auth"
-import { Layout } from "./Layout"
+import { Layout } from "./layout/Layout"
 import { UnderConstruction } from "./UnderConstruction"
 
 export function AdminPage() {

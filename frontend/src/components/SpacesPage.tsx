@@ -1,4 +1,4 @@
-import { Layout } from "./Layout"
+import { Layout } from "./layout/Layout"
 import { useSpaces } from "@/hooks/useSpaces"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
