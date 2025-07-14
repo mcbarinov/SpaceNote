@@ -410,6 +410,56 @@ During the prototyping phase, SpaceNote supports two parallel web implementation
 - **Build Tool**: Vite
 - **Port**: `SPACENOTE_SPA_PORT`
 
+#### SPA Dependencies
+
+**Core Framework**
+- `react` & `react-dom` (v19) - UI framework
+- `typescript` (v5.8) - Type safety
+- `vite` (v7) - Build tool and development server
+
+**Routing & Navigation**
+- `react-router-dom` (v7) - Client-side routing for SPA navigation
+
+**State Management**
+- `zustand` (v5) - Lightweight state management for client state
+- `@tanstack/react-query` (v5) - Server state management, caching, and synchronization
+
+**HTTP & API**
+- `ky` (v1) - Modern fetch wrapper chosen for its simplicity and built-in retry logic
+
+**Forms & Validation**
+- `react-hook-form` (v7) - Performant form state management with minimal re-renders
+- `zod` (v4) - Schema validation that integrates seamlessly with TypeScript
+- `@hookform/resolvers` (v5) - Integration between react-hook-form and zod
+
+**Date & Time**
+- `date-fns` (v4) - Modular date utility library (tree-shakeable, lighter than moment.js)
+
+**UI Component System**
+- `tailwindcss` (v4) - Utility-first CSS framework
+- `shadcn/ui` components built on:
+  - `@radix-ui/*` - Unstyled, accessible component primitives
+  - `class-variance-authority` - Component variant management
+  - `clsx` & `tailwind-merge` - Dynamic class name handling
+  - `lucide-react` - Icon library
+
+**Rich Text Editing**
+- `@tiptap/react` (v3) - Headless rich text editor for Markdown fields
+- `@tiptap/starter-kit` - Essential editor extensions
+- Additional extensions for links, code blocks, and tables
+
+**File Handling**
+- `react-dropzone` (v14) - Drag-and-drop file upload interface
+
+**Utilities**
+- `lodash-es` (v4) - Tree-shakeable utility functions
+
+**Testing & Development**
+- `vitest` (v3) - Vite-native testing framework
+- `@testing-library/react` - React component testing utilities
+- `msw` (v2) - API mocking for tests
+- `eslint` & `prettier` - Code quality and formatting
+
 ### Code Quality
 - **Linting**: Ruff (actively used)
 - **Type Checking**: MyPy (strict typing enforced)
