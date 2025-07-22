@@ -360,35 +360,46 @@ await app.create_note(current_user, space_id, fields)
 - Login returns session ID
 - Session lookup for authentication
 
-## Dual Web Version Strategy (Prototyping Phase)
+## Triple Web Version Strategy (Prototyping Phase)
 
-During the prototyping phase, SpaceNote supports two parallel web implementations:
+During the prototyping phase, SpaceNote temporarily supports three web implementations:
 
 ### Legacy Version (SSR)
 - **Status**: Current server-side rendering implementation
 - **Development**: Continues unchanged, ongoing feature development
 - **Location**: `spacenote/web/` directory
 - **Technology**: FastAPI + Jinja2 templates + Pico CSS
-- **Port**: Standard `SPACENOTE_PORT` (default behavior)
+- **Port**: Standard `SPACENOTE_PORT` (default: 3000)
 - **Approach**: No migration or changes - maintain and extend existing functionality
 
-### New SPA Version
-- **Status**: Modern single-page application implementation
-- **Development**: Built from scratch in parallel
-- **Location**: `/frontend` directory (top-level)
+### Temporary Frontend (Reference)
+- **Status**: Previous React SPA implementation preserved for reference
+- **Location**: `/tmp_frontend` directory (renamed from `/frontend`)
 - **Technology Stack**:
   - **TypeScript**: Type-safe JavaScript
   - **React**: Component-based UI framework
   - **Zustand**: State management library
-- **Port**: Separate `SPACENOTE_SPA_PORT` environment variable
-- **API**: Will consume new REST endpoints with `/new-api/` prefix
-- **Backend Structure**: Separate router files in `spacenote/web/spa_routers/` directory
+- **Port**: `SPACENOTE_TMP_FRONTEND_PORT` (default: 3001)
+- **Purpose**: Source for copying useful components and code to new frontend
+- **Future**: Will be removed once new frontend is complete
+
+### New Frontend (Manual Creation)
+- **Status**: To be created manually from scratch
+- **Location**: `/frontend` directory (to be created)
+- **Port**: `SPACENOTE_FRONTEND_PORT` (default: 3002)
+- **Purpose**: Clean slate implementation with lessons learned from tmp_frontend
+- **Development**: User will create this manually, not via AI agent
+
+### Development Commands
+- `just dev-all` - Run backend + tmp_frontend (ports 3000, 3001)
+- `just dev-triple` - Run all three: backend + tmp_frontend + new frontend (ports 3000, 3001, 3002)
+- `just frontend-dev` - Run only new frontend on port 3002 (requires manual folder creation)
 
 ### Development Strategy
-- **Parallel Development**: Both versions evolve simultaneously
-- **No Migration**: Legacy version remains untouched during SPA development
-- **Future Planning**: SPA may eventually replace legacy when fully featured
-- **Flexibility**: Directory structure may change as requirements evolve
+- **Temporary Transition**: Three versions coexist during frontend rewrite
+- **Manual Development**: New frontend created by hand, not generated
+- **Reference Implementation**: tmp_frontend serves as code reference
+- **Clean Architecture**: New frontend starts fresh with improved structure
 
 ## Technology Stack
 
@@ -403,15 +414,15 @@ During the prototyping phase, SpaceNote supports two parallel web implementation
 - **Styling**: Pico CSS
 - **Architecture**: Server-side rendering
 
-### New SPA Web
+### Temporary Frontend Web
 - **Language**: TypeScript
 - **Framework**: React 19
 - **State Management**: Zustand 5.0
 - **UI Components**: shadcn/ui with Tailwind CSS
 - **Build Tool**: Vite
-- **Port**: `SPACENOTE_SPA_PORT`
+- **Port**: `SPACENOTE_TMP_FRONTEND_PORT`
 
-#### SPA Dependencies
+#### Frontend Dependencies
 
 **Core Framework**
 - `react` & `react-dom` (v19) - UI framework
@@ -419,7 +430,7 @@ During the prototyping phase, SpaceNote supports two parallel web implementation
 - `vite` (v7) - Build tool and development server
 
 **Routing & Navigation**
-- `react-router-dom` (v7) - Client-side routing for SPA navigation
+- `react-router-dom` (v7) - Client-side routing for frontend navigation
 
 **State Management**
 - `zustand` (v5) - Lightweight state management for client state

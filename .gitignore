@@ -49,6 +49,10 @@ frontend/dist/
 frontend/.vite/
 frontend/coverage/
 frontend/tsconfig.tsbuildinfo
+tmp_frontend/dist/
+tmp_frontend/.vite/
+tmp_frontend/coverage/
+tmp_frontend/tsconfig.tsbuildinfo
 
 # Other
 tmp/

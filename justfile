@@ -1,18 +1,33 @@
 set dotenv-load
 
-# Import sub-justfiles
-import "backend/justfile" as backend
-import "frontend/justfile" as frontend
+# Import sub-justfiles removed due to syntax issues
 
 # Default to showing available commands
 default:
     @just --list
 
 # Backend shortcuts (most commonly used)
-dev: backend-dev
-lint: backend-lint
-test: backend-test
-build: backend-build
+dev:
+    cd backend && just dev
+
+lint:
+    cd backend && just lint
+
+test:
+    cd backend && just test
+
+build:
+    cd backend && just build
+
+# Backend commands
+backend-dev:
+    cd backend && just dev
+
+backend-agent-start:
+    cd backend && just agent-start
+
+backend-agent-stop:
+    cd backend && just agent-stop
 
 # Database operations (shared)
 db-reset:
@@ -80,19 +95,46 @@ docker-deploy:
 
 # Quick access to both development servers
 dev-all:
-    @echo "Starting backend and frontend development servers..."
+    @echo "Starting backend and tmp_frontend development servers..."
     @echo "Backend: http://localhost:3000"
-    @echo "Frontend: http://localhost:5173"
+    @echo "Tmp Frontend: http://localhost:3001"
     @echo "Press Ctrl+C to stop both servers"
-    @trap 'kill 0' INT; just backend-dev & just frontend-dev & wait
+    @trap 'kill 0' INT; just backend-dev & just tmp_frontend-dev & wait
+
+# Development with all three components (backend, tmp_frontend, new frontend)
+dev-triple:
+    @echo "Starting backend, tmp_frontend, and frontend development servers..."
+    @echo "Backend: http://localhost:3000"
+    @echo "Tmp Frontend: http://localhost:3001"
+    @echo "New Frontend: http://localhost:3002"
+    @echo "Press Ctrl+C to stop all servers"
+    @trap 'kill 0' INT; just backend-dev & just tmp_frontend-dev & just frontend-dev & wait
+
+# Frontend development (new version)
+frontend-dev:
+    @echo "Starting new frontend development server on port 3002..."
+    @echo "Frontend: http://localhost:3002"
+    @echo "(Frontend folder must be created manually)"
+    cd frontend && npm run dev -- --port 3002
+
+# Tmp Frontend commands
+tmp_frontend-dev:
+    cd tmp_frontend && npm run dev -- --port ${SPACENOTE_TMP_FRONTEND_PORT:-3001}
+
+tmp_frontend-agent-start:
+    cd tmp_frontend && SPACENOTE_SPA_PORT=8002 SPACENOTE_PORT=8001 npm run dev > ../.spa-agent.log 2>&1 & echo $! > ../.spa-agent.pid
+
+tmp_frontend-agent-stop:
+    -pkill -F .spa-agent.pid 2>/dev/null || true
+    -rm -f .spa-agent.pid .spa-agent.log
 
 # AI agent commands
 agent-start:
     just backend-agent-start
-    just frontend-agent-start
-    @echo "✅ AI agent servers started (backend: 8001, frontend: 8002)"
+    just tmp_frontend-agent-start
+    @echo "✅ AI agent servers started (backend: 8001, tmp_frontend: 8002)"
 
 agent-stop:
     just backend-agent-stop
-    just frontend-agent-stop
+    just tmp_frontend-agent-stop
     @echo "✅ AI agent servers stopped"

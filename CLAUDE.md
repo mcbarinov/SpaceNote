@@ -97,14 +97,19 @@ from module.x import SomeClass
 ## Project Commands
 
 ### Human Development
-- `just dev` - Start development server (human use only)
-- `just spa` - Start SPA development server (human use only)
+- `just dev` - Start backend development server (human use only)
+- `just dev-all` - Start backend and tmp_frontend servers (ports 3000, 3001)
+- `just dev-triple` - Start all three servers: backend, tmp_frontend, and new frontend (ports 3000, 3001, 3002)
+- `just frontend-dev` - Start new frontend development server on port 3002 (requires manual creation of frontend folder)
 
 ### AI Agent Operations
-- `just agent-start` - Start AI agent backend server (port 8001)
-- `just agent-stop` - Stop AI agent backend server
-- `just spa-agent-start` - Start AI agent SPA server (port 8002)
-- `just spa-agent-stop` - Stop AI agent SPA server
+- `just agent-start` - Start AI agent servers (backend: 8001, tmp_frontend: 8002)
+- `just agent-stop` - Stop AI agent servers
+
+### Temporary Frontend Status
+During the transition period, we maintain two frontend versions:
+- `tmp_frontend/` - Current React frontend (port 3001) - preserved for reference
+- `frontend/` - New frontend to be created manually (port 3002)
 
 ## Template Writing Guidelines
 

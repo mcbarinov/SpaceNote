@@ -4,7 +4,7 @@ default: dev
 
 # Development server
 dev:
-    npm run dev
+    npm run dev -- --port ${SPACENOTE_TMP_FRONTEND_PORT:-3001}
 
 # Build for production
 build:
