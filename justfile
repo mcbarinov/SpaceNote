@@ -1,63 +1,20 @@
 set dotenv-load
 
-default: dev
+# Import sub-justfiles
+import "backend/justfile" as backend
+import "frontend/justfile" as frontend
 
-clean:
-	rm -rf .pytest_cache .ruff_cache .mypy_cache build dist src/*.egg-info
+# Default to showing available commands
+default:
+    @just --list
 
-sync:
-    uv sync --all-extras
+# Backend shortcuts (most commonly used)
+dev: backend-dev
+lint: backend-lint
+test: backend-test
+build: backend-build
 
-build: clean lint audit test
-    uv build
-
-format:
-    uv run ruff check --select I --fix src tests scripts
-    uv run ruff format src tests scripts
-
-lint *args: format
-    #!/usr/bin/env bash
-    if [[ " {{args}} " == *" --fix "* ]]; then
-        uv run ruff check --fix src tests scripts
-    else
-        uv run ruff check src tests scripts
-    fi
-    uv run mypy src
-
-audit:
-    uv export --no-dev --all-extras --format requirements-txt --no-emit-project > requirements.txt
-    uv run pip-audit -r requirements.txt --disable-pip
-    rm requirements.txt
-    uv run bandit --silent --recursive --configfile "pyproject.toml" src scripts
-
-test:
-    uv run pytest tests
-
-dev:
-    uv run python -m watchfiles "python -m spacenote.main" src
-
-agent-start:
-    SPACENOTE_PORT=8001 uv run python -m spacenote.main > .agent.log 2>&1 & echo $! > .agent.pid
-
-agent-stop:
-    -pkill -F .agent.pid 2>/dev/null || true
-    -rm -f .agent.pid .agent.log
-
-spa-agent-start:
-    #!/usr/bin/env bash
-    cd frontend
-    SPACENOTE_SPA_PORT=8002 SPACENOTE_PORT=8001 npm run dev > ../.spa-agent.log 2>&1 & echo $! > ../.spa-agent.pid
-
-spa-agent-stop:
-    -pkill -F .spa-agent.pid 2>/dev/null || true
-    -rm -f .spa-agent.pid .spa-agent.log
-
-# Frontend SPA commands
-spa:
-    #!/usr/bin/env bash
-    cd frontend
-    npm run dev
-
+# Database operations (shared)
 db-reset:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -73,11 +30,11 @@ db-reset:
         echo "❌ Operation cancelled"
     fi
 
-# Docker commands
+# Docker operations
 docker-build:
     #!/usr/bin/env bash
     set -euo pipefail
-    VERSION=$(grep -E '^version = ' pyproject.toml | cut -d'"' -f2)
+    VERSION=$(grep -E '^version = ' backend/pyproject.toml | cut -d'"' -f2)
     
     # Remove existing builder and create fresh one
     docker buildx rm spacenote-builder 2>/dev/null || true
@@ -93,7 +50,7 @@ docker-build:
 docker-deploy:
     #!/usr/bin/env bash
     set -euo pipefail
-    VERSION=$(grep -E '^version = ' pyproject.toml | cut -d'"' -f2)
+    VERSION=$(grep -E '^version = ' backend/pyproject.toml | cut -d'"' -f2)
     
     # Check if working directory is clean
     if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -120,3 +77,22 @@ docker-deploy:
     git push origin "v$VERSION"
     
     echo "✅ Git tag v$VERSION created and pushed"
+
+# Quick access to both development servers
+dev-all:
+    @echo "Starting backend and frontend development servers..."
+    @echo "Backend: http://localhost:3000"
+    @echo "Frontend: http://localhost:5173"
+    @echo "Press Ctrl+C to stop both servers"
+    @trap 'kill 0' INT; just backend-dev & just frontend-dev & wait
+
+# AI agent commands
+agent-start:
+    just backend-agent-start
+    just frontend-agent-start
+    @echo "✅ AI agent servers started (backend: 8001, frontend: 8002)"
+
+agent-stop:
+    just backend-agent-stop
+    just frontend-agent-stop
+    @echo "✅ AI agent servers stopped"

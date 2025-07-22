@@ -20,11 +20,11 @@ ENV UV_LINK_MODE=copy \
 RUN --mount=type=cache,target=/root/.cache uv venv $UV_PROJECT_ENVIRONMENT
 
 # Install dependencies
-COPY pyproject.toml uv.lock /project/
+COPY backend/pyproject.toml backend/uv.lock /project/
 RUN --mount=type=cache,target=/root/.cache uv sync --frozen --no-install-project --no-dev
 
 # Build the project
-COPY src/ /project/src/
+COPY backend/src/ /project/src/
 RUN --mount=type=cache,target=/root/.cache uv build --wheel -o /dist /project
 
 # Install the project package

@@ -1,0 +1,45 @@
+set dotenv-load
+
+default: dev
+
+clean:
+	rm -rf .pytest_cache .ruff_cache .mypy_cache build dist src/*.egg-info
+
+sync:
+    uv sync --all-extras
+
+build: clean lint audit test
+    uv build
+
+format:
+    uv run ruff check --select I --fix src tests scripts
+    uv run ruff format src tests scripts
+
+lint *args: format
+    #!/usr/bin/env bash
+    if [[ " {{args}} " == *" --fix "* ]]; then
+        uv run ruff check --fix src tests scripts
+    else
+        uv run ruff check src tests scripts
+    fi
+    uv run mypy src
+
+audit:
+    uv export --no-dev --all-extras --format requirements-txt --no-emit-project > requirements.txt
+    uv run pip-audit -r requirements.txt --disable-pip
+    rm requirements.txt
+    uv run bandit --silent --recursive --configfile "pyproject.toml" src scripts
+
+test:
+    uv run pytest tests
+
+dev:
+    uv run python -m watchfiles "python -m spacenote.main" src
+
+# Run backend on port 8001 for AI agent
+agent-start:
+    SPACENOTE_PORT=8001 uv run python -m spacenote.main > ../.agent.log 2>&1 & echo $! > ../.agent.pid
+
+agent-stop:
+    -pkill -F ../.agent.pid 2>/dev/null || true
+    -rm -f ../.agent.pid ../.agent.log
