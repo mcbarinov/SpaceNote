@@ -11,7 +11,7 @@ export default function NotesIndexPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">My Spaces</h1>
       <ul className="space-y-4">
-        {mockSpaces.map((space) => (
+        {mockSpaces.map(space => (
           <li key={space.id}>
             <Link to={`/notes/${space.id}`} className="hover:underline">
               {space.name}

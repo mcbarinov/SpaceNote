@@ -1,5 +1,5 @@
 import { createBrowserRouter, redirect } from "react-router"
-import Layout from "./components/Layout"
+import Layout from "./components/layout/Layout"
 import LoginPage from "./pages/login"
 import NotesIndexPage from "./pages/notes"
 import SpaceNotes from "./pages/notes/SpaceNotes"

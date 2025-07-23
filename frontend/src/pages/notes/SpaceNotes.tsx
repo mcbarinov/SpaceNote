@@ -22,10 +22,12 @@ export default function SpaceNotes() {
 
   return (
     <div>
-      <Link to="/notes" className="hover:underline">← Back to spaces</Link>
+      <Link to="/notes" className="hover:underline">
+        ← Back to spaces
+      </Link>
       <h1 className="text-2xl font-bold my-4">Notes in {spaceId}</h1>
       <ul className="space-y-2">
-        {notes.map((note) => (
+        {notes.map(note => (
           <li key={note.id}>
             <Link to={`/notes/${spaceId}/${note.id}`} className="hover:underline">
               {note.title}

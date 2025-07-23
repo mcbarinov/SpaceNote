@@ -1,22 +1,22 @@
-import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
 
 interface AuthState {
   sessionId: string | null
   userId: string | null
   isAuthenticated: boolean
-  
+
   login: (sessionId: string, userId: string) => void
   logout: () => void
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    set => ({
       sessionId: null,
       userId: null,
       isAuthenticated: false,
-      
+
       login: (sessionId: string, userId: string) => {
         set({
           sessionId,
@@ -24,7 +24,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
         })
       },
-      
+
       logout: () => {
         set({
           sessionId: null,
@@ -34,7 +34,7 @@ export const useAuthStore = create<AuthState>()(
       },
     }),
     {
-      name: 'spacenote-auth',
+      name: "spacenote-auth",
     }
   )
 )

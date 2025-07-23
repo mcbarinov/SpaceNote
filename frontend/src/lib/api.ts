@@ -1,16 +1,16 @@
-import ky from 'ky'
-import { useAuthStore } from '../stores/authStore'
+import ky from "ky"
+import { useAuthStore } from "../stores/authStore"
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 
 export const api = ky.create({
   prefixUrl: API_URL,
   hooks: {
     beforeRequest: [
-      (request) => {
+      request => {
         const sessionId = useAuthStore.getState().sessionId
         if (sessionId) {
-          request.headers.set('X-Session-ID', sessionId)
+          request.headers.set("X-Session-ID", sessionId)
         }
       },
     ],
@@ -18,7 +18,7 @@ export const api = ky.create({
       async (request, options, response) => {
         if (response.status === 401) {
           useAuthStore.getState().logout()
-          window.location.href = '/login'
+          window.location.href = "/login"
         }
       },
     ],
@@ -37,6 +37,6 @@ export interface LoginResponse {
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<LoginResponse> => {
-    return await api.post('auth/login', { json: data }).json()
+    return await api.post("auth/login", { json: data }).json()
   },
 }

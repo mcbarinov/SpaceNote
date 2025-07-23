@@ -1,0 +1,5 @@
+format:
+    pnpm run format
+
+lint: format
+    pnpm run lint

@@ -55,7 +55,9 @@ export default function NoteDetail() {
 
   return (
     <div>
-      <Link to={`/notes/${spaceId}`} className="hover:underline">← Back to notes</Link>
+      <Link to={`/notes/${spaceId}`} className="hover:underline">
+        ← Back to notes
+      </Link>
       <h1 className="text-2xl font-bold my-4">{note.title}</h1>
       <p className="text-gray-600 text-sm">
         By {note.author} on {note.created}
