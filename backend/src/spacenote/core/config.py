@@ -24,7 +24,7 @@ class CoreConfig(BaseSettings):
     base_url: str
 
     model_config = {
-        "env_file": ".env",
+        "env_file": [".env", "../.env"],
         "env_prefix": "SPACENOTE_",
         "extra": "ignore",
     }

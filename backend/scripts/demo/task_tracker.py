@@ -24,17 +24,17 @@ from spacenote.core.app import App
 from spacenote.core.config import CoreConfig
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
-from spacenote.core.user.models import User
+from spacenote.core.user.models import SessionId
 
 
 class TaskTrackerGenerator:
-    def __init__(self, app: App, admin_user: User, records: int = 200, max_comments: int = 20) -> None:
+    def __init__(self, app: App, session_id: SessionId, records: int = 200, max_comments: int = 20) -> None:
         self.app = app
-        self.admin_user = admin_user
+        self.session_id = session_id
         self.records = records
         self.max_comments = max_comments
-        self.space_id = ""
-        self.members = []
+        self.space_id: str = ""
+        self.members: list[str] = []
 
     async def generate(self) -> None:
         """Generate the complete Task Tracker demo space with data."""
@@ -60,7 +60,7 @@ class TaskTrackerGenerator:
 
     def _load_space_config(self) -> dict[str, Any]:
         """Load space configuration from JSON file."""
-        config_path = Path(__file__).parent.parent.parent / "docs" / "examples" / "json" / "task-tracker.json"
+        config_path = Path(__file__).parent.parent.parent.parent / "docs" / "examples" / "json" / "task-tracker.json"
 
         if not config_path.exists():
             raise FileNotFoundError(f"Space configuration not found: {config_path}")
@@ -76,11 +76,11 @@ class TaskTrackerGenerator:
         if "admin" not in members:
             members.append("admin")
 
-        existing_users = {user.id for user in self.app.get_users(self.admin_user)}
+        existing_users = {user.id for user in await self.app.get_users(self.session_id)}
 
         for username in members:
             if username not in existing_users:
-                await self.app.create_user(self.admin_user, username, "password123")
+                await self.app.create_user(self.session_id, username, "password123")
                 print(f"   Created user: {username}")
             else:
                 print(f"   User exists: {username}")
@@ -96,7 +96,7 @@ class TaskTrackerGenerator:
         space_id = base_id
         suffix = 1
 
-        existing_spaces = {space.id for space in self.app.get_all_spaces(self.admin_user)}
+        existing_spaces = {space.id for space in await self.app.get_all_spaces(self.session_id)}
 
         while space_id in existing_spaces:
             suffix += 1
@@ -105,7 +105,7 @@ class TaskTrackerGenerator:
         self.space_id = space_id
 
         # Create space
-        await self.app.create_space(self.admin_user, space_id, config["name"])
+        await self.app.create_space(self.session_id, space_id, config["name"])
         print(f"   Created space: {space_id}")
 
         # Add members
@@ -115,10 +115,10 @@ class TaskTrackerGenerator:
         await self._configure_fields(config["fields"])
 
         # Configure list fields
-        await self.app.update_list_fields(self.admin_user, space_id, config["list_fields"])
+        await self.app.update_list_fields(self.session_id, self.space_id, config["list_fields"])
 
         # Configure hidden create fields
-        await self.app.update_hidden_create_fields(self.admin_user, space_id, config["hidden_create_fields"])
+        await self.app.update_hidden_create_fields(self.session_id, self.space_id, config["hidden_create_fields"])
 
         # Add filters
         await self._add_filters(config["filters"])
@@ -127,20 +127,20 @@ class TaskTrackerGenerator:
 
     async def _update_space_members(self) -> None:
         """Update space members to include all demo users."""
-        await self.app.update_space_members(self.admin_user, self.space_id, self.members)
+        await self.app.update_space_members(self.session_id, self.space_id, self.members)
         print(f"   Members updated: {', '.join(self.members)}")
 
     async def _configure_fields(self, fields_config: list[dict[str, Any]]) -> None:
         """Configure space fields from JSON configuration."""
         for field_config in fields_config:
             field = SpaceField(**field_config)
-            await self.app.add_field(self.admin_user, self.space_id, field)
+            await self.app.add_field(self.session_id, self.space_id, field)
 
     async def _add_filters(self, filters_config: list[dict[str, Any]]) -> None:
         """Add filters from JSON configuration."""
         for filter_config in filters_config:
             filter_obj = Filter(**filter_config)
-            await self.app.add_filter(self.admin_user, self.space_id, filter_obj)
+            await self.app.add_filter(self.session_id, self.space_id, filter_obj)
 
     async def _generate_tasks(self) -> None:
         """Generate realistic task data."""
@@ -168,7 +168,7 @@ class TaskTrackerGenerator:
             }
 
             # Create task
-            note = await self.app.create_note_from_raw_fields(self.admin_user, self.space_id, task_data)
+            note = await self.app.create_note_from_raw_fields(self.session_id, self.space_id, task_data)
 
             # Add comments
             await self._add_comments(note.id)
@@ -201,7 +201,7 @@ class TaskTrackerGenerator:
             # Note: This assumes admin can create comments as any user
             # May need to be modified based on actual comment API
             with contextlib.suppress(Exception):
-                await self.app.create_comment(self.admin_user, self.space_id, note_id, comment)
+                await self.app.create_comment(self.session_id, self.space_id, note_id, comment)
 
     def _get_task_templates(self) -> list[dict[str, Any]]:
         """Get realistic task templates for generation."""
@@ -288,7 +288,7 @@ async def main() -> None:
 
     args = parser.parse_args()
 
-    # Initialize app
+    # Initialize app using environment configuration
     config = CoreConfig()
     app = App(config)
 
@@ -299,13 +299,8 @@ async def main() -> None:
             print("❌ Failed to login as admin")
             return
 
-        admin_user = await app.get_user_by_session(session_id)
-        if not admin_user:
-            print("❌ Failed to get admin user")
-            return
-
         # Generate demo data
-        generator = TaskTrackerGenerator(app, admin_user, args.records, args.max_comments)
+        generator = TaskTrackerGenerator(app, session_id, args.records, args.max_comments)
         await generator.generate()
 
 

@@ -21,7 +21,7 @@ class WebConfig(BaseSettings):
     debug: bool
 
     model_config = {
-        "env_file": ".env",
+        "env_file": [".env", "../.env"],
         "env_prefix": "SPACENOTE_",
         "extra": "ignore",
     }
