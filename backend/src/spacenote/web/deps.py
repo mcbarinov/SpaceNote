@@ -13,7 +13,13 @@ async def get_app(request: Request) -> App:
 
 
 async def get_session_id(request: Request) -> SessionId | None:
-    """Get session ID from cookies."""
+    """Get session ID from headers or cookies."""
+    # Check X-Session-ID header first (for development)
+    session_header = request.headers.get("x-session-id")
+    if session_header:
+        return SessionId(session_header)
+
+    # Fallback to cookies (for future production use)
     session_id = request.cookies.get("session_id")
     if session_id:
         return SessionId(session_id)
