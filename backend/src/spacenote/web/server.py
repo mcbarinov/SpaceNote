@@ -15,17 +15,17 @@ from spacenote.web.error_handlers import (
     not_found_handler,
     value_error_handler,
 )
+from spacenote.web.legacy.admin import router as admin_router
+from spacenote.web.legacy.api import router as api_router
+from spacenote.web.legacy.attachment import router as attachment_router
+from spacenote.web.legacy.auth import router as auth_router
+from spacenote.web.legacy.media import router as media_router
+from spacenote.web.legacy.note import router as note_router
+from spacenote.web.legacy.profile import router as profile_router
+from spacenote.web.legacy.space import router as space_router
 from spacenote.web.render import init_jinja
-from spacenote.web.routers.admin import router as admin_router
-from spacenote.web.routers.api import router as api_router
-from spacenote.web.routers.attachment import router as attachment_router
-from spacenote.web.routers.auth import router as auth_router
-from spacenote.web.routers.media import router as media_router
-from spacenote.web.routers.note import router as note_router
-from spacenote.web.routers.profile import router as profile_router
-from spacenote.web.routers.space import router as space_router
-from spacenote.web.spa_routers.auth import router as spa_auth_router
-from spacenote.web.spa_routers.spaces import router as spa_spaces_router
+from spacenote.web.tmp_routers.auth import router as spa_auth_router
+from spacenote.web.tmp_routers.spaces import router as spa_spaces_router
 
 
 def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
