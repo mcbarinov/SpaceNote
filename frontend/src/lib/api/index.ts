@@ -1,5 +1,5 @@
 import ky from "ky"
-import { useAuthStore } from "../stores/authStore"
+import { useAuthStore } from "../../stores/authStore"
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api"
 
@@ -15,7 +15,7 @@ export const api = ky.create({
       },
     ],
     afterResponse: [
-      async (request, options, response) => {
+      async (_request, _options, response) => {
         if (response.status === 401) {
           useAuthStore.getState().logout()
           window.location.href = "/login"
@@ -25,18 +25,6 @@ export const api = ky.create({
   },
 })
 
-export interface LoginRequest {
-  username: string
-  password: string
-}
-
-export interface LoginResponse {
-  session_id: string
-  user_id: string
-}
-
-export const authApi = {
-  login: async (data: LoginRequest): Promise<LoginResponse> => {
-    return await api.post("auth/login", { json: data }).json()
-  },
-}
+// Re-export all APIs
+export * from "./auth"
+export * from "./spaces"

@@ -12,27 +12,23 @@ export default function Header() {
     navigate("/login")
   }
   return (
-    <header className="border-b p-8">
-      <nav className="flex justify-between items-center">
-        <Link to="/notes" className="text-lg font-semibold">
+    <header className="border-b px-6">
+      <nav className="flex justify-center items-center h-14 gap-8">
+        <Link to="/notes" className="font-bold">
           SpaceNote
         </Link>
-
-        <Link to="/notes" className="hover:text-accent-foreground">
-          Notes
-        </Link>
-        <Link to="/spaces" className="hover:text-accent-foreground">
-          Spaces
-        </Link>
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-1 font-medium hover:underline focus:outline-none">
+          <DropdownMenuTrigger className="flex items-center gap-2">
             <User className="w-4 h-4" />
             {userId}
-            <ChevronDown className="w-4 h-4" />
+            <ChevronDown className="w-3 h-3" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" sideOffset={5}>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Spaces</DropdownMenuItem>
             <DropdownMenuItem>Change Password</DropdownMenuItem>
-            <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive">
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </nav>

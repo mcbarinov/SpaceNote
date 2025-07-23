@@ -117,6 +117,27 @@ During the transition period, we maintain two frontend versions:
 - `tmp_frontend/` - Current React frontend (port 3001) - preserved for reference
 - `frontend/` - New frontend to be created manually (port 3002)
 
+## API Router Structure
+
+**IMPORTANT**: SpaceNote has three independent frontends, each with its own API routes:
+
+1. **Legacy Web (Jinja2/SSR)** - `web/legacy/`
+   - Server-side rendered pages using Jinja2 templates
+   - Routes in `web/legacy/` are ONLY for this frontend
+   - Includes `web/legacy/api.py` for AJAX endpoints used by legacy frontend
+
+2. **New Frontend (React/SPA)** - `frontend/`
+   - Modern React SPA on port 3002
+   - API routes should be in `web/routers/` (NOT `web/legacy/`)
+   - Create new router files like `web/routers/spaces.py` for new API endpoints
+   - These routes should follow RESTful patterns as described in architecture docs
+
+3. **Temporary Frontend** - `tmp_frontend/`
+   - DO NOT USE - reference only
+   - Routes in `web/tmp_routers/` should be ignored completely
+
+When implementing new API endpoints for the React frontend, always create them in `web/routers/`, never in `web/legacy/` or `web/tmp_routers/`.
+
 ## Template Writing Guidelines
 
 Since we are in the prototyping phase:
