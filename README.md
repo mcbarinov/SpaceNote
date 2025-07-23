@@ -4,13 +4,8 @@ Flexible note-taking system where users create custom "spaces" for different pur
 
 ## Documentation
 
-- [Architecture](docs/architecture.md)
+- [Core Concepts](docs/architecture/concepts.md)
+- [Backend Architecture](docs/architecture/backend.md)
+- [Frontend Architecture](docs/architecture/frontend.md)
 - [Installation](docs/install.md)
 - [Examples](docs/examples.md)
-
-## Tech Stack
-
-- Python 3.13+
-- MongoDB
-- FastAPI
-- Pydantic v2

@@ -1,20 +1,26 @@
 # Claude Code Agent Instructions
 
-This file contains technical instructions specifically for the Claude Code agent. Project architecture and general documentation should be found in `docs/architecture.md`.
+This file contains technical instructions specifically for the Claude Code agent. Project architecture and general documentation should be found in the `docs/architecture/` directory.
 
 ## Required Reading
 
 When starting work on this project, you MUST read:
 1. This file (`CLAUDE.md`) - for Claude Code agent-specific instructions
-2. `docs/architecture.md` - for project architecture and general information
+2. `docs/architecture/concepts.md` - for core concepts and high-level overview
+3. `docs/architecture/backend.md` - for backend architecture details
+4. `docs/architecture/frontend.md` - for frontend implementation details
 
-Both files are mandatory reading. The architecture file contains information for both humans and other AI agents.
+All files are mandatory reading. The architecture files contain information for both humans and other AI agents.
 
 ## Content Guidelines
 
-- **No duplication**: Never duplicate information between `CLAUDE.md` and `docs/architecture.md`
+- **No duplication**: Never duplicate information between `CLAUDE.md` and architecture docs
 - `CLAUDE.md`: Technical instructions for Claude Code agent only
-- `docs/architecture.md`: Project architecture, design decisions, and general documentation
+- `docs/architecture/`: Project architecture, design decisions, and general documentation
+
+## Important: Ignore tmp_frontend
+
+**NEVER work with or modify anything in the `tmp_frontend/` directory.** This is a temporary reference implementation that should be completely ignored during development. It will be removed soon.
 
 ## Language Requirements
 
@@ -150,7 +156,7 @@ When writing web route handlers:
 
 ## Documentation Writing Guidelines
 
-When writing `docs/architecture.md`:
+When writing architecture documentation:
 - Write concisely, only what matters
 - No unnecessary filler content
 - Focus on essential information only
