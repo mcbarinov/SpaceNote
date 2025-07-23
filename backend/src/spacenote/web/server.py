@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from importlib.metadata import version
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from spacenote.core.app import App
@@ -44,6 +45,16 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     app = FastAPI(title="SpaceNote", version=version("spacenote"), lifespan=lifespan)
 
     app.add_middleware(SessionMiddleware, secret_key=web_config.session_secret_key)
+
+    # Add CORS middleware for frontend development
+    if web_config.cors_origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=web_config.cors_origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
 
     # Health check endpoint for Docker
     @app.get("/health")

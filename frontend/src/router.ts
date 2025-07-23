@@ -4,6 +4,7 @@ import LoginPage from "./pages/login"
 import NotesIndexPage from "./pages/notes"
 import SpaceNotes from "./pages/notes/SpaceNotes"
 import NoteDetail from "./pages/notes/NoteDetail"
+import { requireAuth } from "./lib/auth"
 
 export const router = createBrowserRouter([
   {
@@ -17,6 +18,7 @@ export const router = createBrowserRouter([
   {
     path: "/",
     Component: Layout,
+    loader: requireAuth,
     children: [
       {
         path: "notes",
