@@ -77,8 +77,8 @@ just dev-all
 
 ## Development Strategy
 
-### Parallel Development
-Both frontend implementations are developed in parallel:
+### Dual Frontend Approach
+SpaceNote provides two frontend implementations:
 - **Frontend**: Modern SPA with full JavaScript functionality
 - **Legacy**: Server-rendered pages with progressive enhancement
 
@@ -177,18 +177,3 @@ If the application grows in complexity, consider adding:
 - **Real-time updates** with WebSockets for collaborative features
 - **Advanced caching strategies** for improved performance
 
----
-
-## Temporary Reference (tmp_frontend)
-
-**Status**: Reference only - DO NOT USE FOR DEVELOPMENT
-**Location**: `/tmp_frontend`
-**Port**: `SPACENOTE_TMP_FRONTEND_PORT` (default: 3001)
-
-This directory contains a previous React implementation preserved only for reference. It should be **completely ignored** during development and will be **removed soon**.
-
-**Important Notes:**
-- Never develop or modify anything in `tmp_frontend/`
-- Do not copy code directly from `tmp_frontend/`
-- Use it only as reference for understanding previous patterns
-- Will be deleted once main frontend development is complete

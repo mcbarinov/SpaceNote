@@ -1,6 +1,12 @@
 import { Link, useNavigate } from "react-router"
 import { useAuthStore } from "@/stores/authStore"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ChevronDown, User } from "lucide-react"
 import { useDialog } from "@/lib/dialog"
 

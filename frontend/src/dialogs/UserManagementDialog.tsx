@@ -31,7 +31,7 @@ export function UserManagementDialog({ onClose }: BaseDialogProps) {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    
+
     const formData = new FormData(e.currentTarget)
     const username = (formData.get("username") as string).trim()
     const password = formData.get("password") as string
@@ -62,7 +62,7 @@ export function UserManagementDialog({ onClose }: BaseDialogProps) {
 
         <div className="space-y-4">
           {error && <p className="text-sm text-red-600">{error}</p>}
-          
+
           <div className="border rounded-md divide-y">
             {users.map(user => (
               <div key={user.id} className="px-4 py-2">
@@ -75,23 +75,11 @@ export function UserManagementDialog({ onClose }: BaseDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  name="username"
-                  type="text"
-                  placeholder="Username"
-                  disabled={isSubmitting}
-                />
+                <Input id="username" name="username" type="text" placeholder="Username" disabled={isSubmitting} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Password"
-                  disabled={isSubmitting}
-                />
+                <Input id="password" name="password" type="password" placeholder="Password" disabled={isSubmitting} />
               </div>
             </div>
             <Button type="submit" disabled={isSubmitting} className="w-full">

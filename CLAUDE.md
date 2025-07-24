@@ -18,9 +18,6 @@ All files are mandatory reading. The architecture files contain information for 
 - `CLAUDE.md`: Technical instructions for Claude Code agent only
 - `docs/architecture/`: Project architecture, design decisions, and general documentation
 
-## Important: Ignore tmp_frontend
-
-**NEVER work with or modify anything in the `tmp_frontend/` directory.** This is a temporary reference implementation that should be completely ignored during development. It will be removed soon.
 
 ## Language Requirements
 
@@ -104,22 +101,16 @@ from module.x import SomeClass
 
 ### Human Development
 - `just dev` - Start backend development server (human use only)
-- `just dev-all` - Start backend and tmp_frontend servers (ports 3000, 3001)
-- `just dev-triple` - Start all three servers: backend, tmp_frontend, and new frontend (ports 3000, 3001, 3002)
-- `just frontend-dev` - Start new frontend development server on port 3002 (requires manual creation of frontend folder)
+- `just dev-all` - Start backend and frontend servers
+- `just frontend-dev` - Start frontend development server on port 3002
 
 ### AI Agent Operations
-- `just agent-start` - Start AI agent servers (backend: 8001, tmp_frontend: 8002)
+- `just agent-start` - Start AI agent servers (backend: 8001)
 - `just agent-stop` - Stop AI agent servers
-
-### Temporary Frontend Status
-During the transition period, we maintain two frontend versions:
-- `tmp_frontend/` - Current React frontend (port 3001) - preserved for reference
-- `frontend/` - New frontend to be created manually (port 3002)
 
 ## API Router Structure
 
-**IMPORTANT**: SpaceNote has three independent frontends, each with its own API routes:
+**IMPORTANT**: SpaceNote has two independent frontends, each with its own API routes:
 
 1. **Legacy Web (Jinja2/SSR)** - `web/legacy/`
    - Server-side rendered pages using Jinja2 templates
@@ -132,11 +123,7 @@ During the transition period, we maintain two frontend versions:
    - Create new router files like `web/routers/spaces.py` for new API endpoints
    - These routes should follow RESTful patterns as described in architecture docs
 
-3. **Temporary Frontend** - `tmp_frontend/`
-   - DO NOT USE - reference only
-   - Routes in `web/tmp_routers/` should be ignored completely
-
-When implementing new API endpoints for the React frontend, always create them in `web/routers/`, never in `web/legacy/` or `web/tmp_routers/`.
+When implementing new API endpoints for the React frontend, always create them in `web/routers/`, never in `web/legacy/`.
 
 ## Template Writing Guidelines
 
