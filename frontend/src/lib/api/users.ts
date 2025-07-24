@@ -1,6 +1,16 @@
-// TODO: Add User interface and usersApi when needed
-// import { api } from "./index"
+import { api } from "./index"
+
+export interface CreateUserRequest {
+  username: string
+  password: string
+}
 
 export const usersApi = {
-  // Placeholder for future user-related API calls
+  getUsers: async () => {
+    return await api.get("users").json<{ id: string }[]>()
+  },
+
+  createUser: async (data: CreateUserRequest) => {
+    return await api.post("users", { json: data }).json<{ id: string }>()
+  },
 }

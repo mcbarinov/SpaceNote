@@ -29,3 +29,4 @@ export const api = ky.create({
 export * from "./auth"
 export * from "./notes"
 export * from "./spaces"
+export * from "./users"

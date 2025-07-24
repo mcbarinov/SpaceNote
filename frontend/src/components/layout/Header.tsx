@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router"
 import { useAuthStore } from "@/stores/authStore"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown, User } from "lucide-react"
 import { useDialog } from "@/lib/dialog"
 
@@ -29,6 +29,12 @@ export default function Header() {
         console.error("Password change failed:", error)
       })
   }
+
+  const handleManageUsers = () => {
+    dialog.open("userManagement")
+  }
+
+  const isAdmin = userId === "admin"
   return (
     <header className="border-b px-6">
       <nav className="flex justify-center items-center h-14 gap-8">
@@ -44,6 +50,13 @@ export default function Header() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Spaces</DropdownMenuItem>
             <DropdownMenuItem onClick={handleChangePassword}>Change Password</DropdownMenuItem>
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleManageUsers}>Manage Users</DropdownMenuItem>
+              </>
+            )}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive">
               Logout
             </DropdownMenuItem>
