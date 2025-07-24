@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import importlib
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 from urllib.parse import urlparse
 
 from pymongo import AsyncMongoClient
@@ -50,6 +51,8 @@ class Service:
 
 
 class Services:
+    """Service registry that automatically discovers and initializes services."""
+
     user: UserService
     space: SpaceService
     comment: CommentService
@@ -62,40 +65,49 @@ class Services:
     special: SpecialService
 
     def __init__(self, database: AsyncDatabase[dict[str, Any]]) -> None:
-        from spacenote.core.access.service import AccessService  # noqa: PLC0415
-        from spacenote.core.attachment.service import AttachmentService  # noqa: PLC0415
-        from spacenote.core.comment.service import CommentService  # noqa: PLC0415
-        from spacenote.core.export.service import ExportService  # noqa: PLC0415
-        from spacenote.core.note.service import NoteService  # noqa: PLC0415
-        from spacenote.core.session.service import SessionService  # noqa: PLC0415
-        from spacenote.core.space.service import SpaceService  # noqa: PLC0415
-        from spacenote.core.special.service import SpecialService  # noqa: PLC0415
-        from spacenote.core.telegram.service import TelegramService  # noqa: PLC0415
-        from spacenote.core.user.service import UserService  # noqa: PLC0415
+        """Initialize all services automatically using service configuration."""
+        self._services: list[Service] = []
+        self._database = database
 
-        self.user = UserService(database)
-        self.space = SpaceService(database)
-        self.comment = CommentService(database)
-        self.access = AccessService(database)
-        self.note = NoteService(database)
-        self.export = ExportService(database)
-        self.attachment = AttachmentService(database)
-        self.telegram = TelegramService(database)
-        self.session = SessionService(database)
-        self.special = SpecialService(database)
+        # Service configuration: (attribute_name, module_path, class_name)
+        # Order matters for initialization - user and space must be first
+        service_configs = [
+            ("user", "spacenote.core.user.service", "UserService"),
+            ("space", "spacenote.core.space.service", "SpaceService"),
+            ("access", "spacenote.core.access.service", "AccessService"),
+            ("session", "spacenote.core.session.service", "SessionService"),
+            ("note", "spacenote.core.note.service", "NoteService"),
+            ("comment", "spacenote.core.comment.service", "CommentService"),
+            ("attachment", "spacenote.core.attachment.service", "AttachmentService"),
+            ("export", "spacenote.core.export.service", "ExportService"),
+            ("special", "spacenote.core.special.service", "SpecialService"),
+            ("telegram", "spacenote.core.telegram.service", "TelegramService"),
+        ]
+
+        # Dynamically import and instantiate services
+        for attr_name, module_path, class_name in service_configs:
+            module = importlib.import_module(module_path)
+            service_class = cast(type[Service], getattr(module, class_name))
+            service_instance = service_class(database)
+            setattr(self, attr_name, service_instance)
+            self._services.append(service_instance)
 
     def set_core(self, core: Core) -> None:
         """Set core reference for all services."""
-        self.user.set_core(core)
-        self.space.set_core(core)
-        self.comment.set_core(core)
-        self.access.set_core(core)
-        self.note.set_core(core)
-        self.export.set_core(core)
-        self.attachment.set_core(core)
-        self.telegram.set_core(core)
-        self.session.set_core(core)
-        self.special.set_core(core)
+        for service in self._services:
+            service.set_core(core)
+
+    async def start_all(self) -> None:
+        """Start all services that have startup logic."""
+        for service in self._services:
+            if hasattr(service, "on_start"):
+                await service.on_start()
+
+    async def stop_all(self) -> None:
+        """Stop all services that have cleanup logic."""
+        for service in self._services:
+            if hasattr(service, "on_stop"):
+                await service.on_stop()
 
 
 class Core:
@@ -127,13 +139,9 @@ class Core:
 
     async def on_start(self) -> None:
         """Initialize the application on startup."""
-        await self.services.user.on_start()
-        await self.services.space.on_start()
-        await self.services.comment.on_start()
-        await self.services.note.on_start()
-        await self.services.attachment.on_start()
-        await self.services.session.on_start()
+        await self.services.start_all()
 
     async def on_stop(self) -> None:
         """Cleanup on application shutdown."""
+        await self.services.stop_all()
         await self.mongo_client.aclose()

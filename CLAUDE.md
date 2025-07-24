@@ -39,15 +39,6 @@ All content must be in English:
 - We are NOT writing tests at this stage
 - Focus is on rapid iteration and exploration
 
-## Shell Configuration
-
-**Important**: To avoid conflicts with user's zsh customizations (like zoxide), always use bash for commands:
-
-```bash
-SHELL=/bin/bash bash -c 'cd /path/to/directory && command'
-```
-
-This prevents issues with custom zsh configurations that may interfere with directory navigation.
 
 ## Code Quality Checks
 

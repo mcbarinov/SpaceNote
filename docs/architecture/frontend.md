@@ -99,28 +99,3 @@ interface ApiResponse<T> {
   }
 }
 ```
-
-## Build and Deployment
-
-### Frontend Development
-```bash
-cd frontend/
-npm run dev          # Development server
-npm run build        # Production build
-npm run type-check   # TypeScript validation
-npm run lint         # Code quality checks
-```
-
-### Production Optimization
-- Tree shaking for minimal bundle size
-- Asset optimization and compression
-- Critical CSS extraction
-- Service worker for offline capability
-
-### Future Considerations
-
-If the application grows in complexity, consider adding:
-- **React Query** for advanced server state management, caching, and optimistic updates
-- **Real-time updates** with WebSockets for collaborative features
-- **Advanced caching strategies** for improved performance
-
