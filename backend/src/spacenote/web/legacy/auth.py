@@ -31,9 +31,6 @@ class Auth:
 
     @router.get("/login", response_model=None)
     async def login_page(self) -> HTMLResponse | RedirectResponse:
-        if self.session_id:
-            return redirect("/notes")
-
         return await self.render.html("login.j2")
 
     @router.post("/login", response_model=None)

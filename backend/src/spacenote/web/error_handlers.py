@@ -1,7 +1,7 @@
 import logging
 
 from fastapi import Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 
 from spacenote.web.deps import get_app, get_render, get_session_id
 
@@ -34,6 +34,17 @@ async def not_found_handler(request: Request, exc: Exception) -> Response:
 async def value_error_handler(request: Request, exc: Exception) -> Response:
     """Handle validation errors (400)."""
     return await render_error_page(request=request, status_code=400, title="Invalid Request", message=str(exc))
+
+
+async def authentication_error_handler(request: Request, exc: Exception) -> Response:
+    """Handle authentication errors by redirecting to login."""
+    # Check if this is an API request by looking at headers or path
+    if request.url.path.startswith("/api/") or request.headers.get("content-type") == "application/json":
+        # For API requests, return JSON response
+        return JSONResponse(status_code=401, content={"detail": "Authentication required", "message": str(exc)})
+
+    # For web pages, redirect to login
+    return RedirectResponse(url="/login", status_code=302)
 
 
 async def general_exception_handler(request: Request, exc: Exception) -> Response:
