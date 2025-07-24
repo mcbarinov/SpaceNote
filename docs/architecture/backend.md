@@ -5,7 +5,7 @@
 - **Language**: Python 3.13+
 - **Database**: MongoDB
 - **Models**: Pydantic v2 with strict validation
-- **Web Framework**: FastAPI (legacy web client)
+- **Web Framework**: FastAPI
 - **Type Checking**: MyPy with strict mode
 - **Linting**: Ruff
 
@@ -38,9 +38,7 @@ spacenote/
 │   ├── telegram/      # Telegram integration
 │   └── access/        # Access control
 ├── web/               # Web layer (FastAPI)
-│   ├── routers/      # New API endpoints (HTTP API approach)
-│   ├── legacy/       # Legacy SSR endpoints
-│   └── templates/    # Jinja2 templates
+│   └── routers/      # API endpoints
 └── scripts/          # Utility scripts
 ```
 
@@ -340,7 +338,7 @@ class CoreConfig(BaseSettings):
 
 ### HTTP API Approach
 
-SpaceNote uses an **HTTP API approach** rather than strict REST for the new frontend API (`/api/...`):
+SpaceNote uses an **HTTP API approach** rather than strict REST for the frontend API (`/api/...`):
 
 **Design Philosophy:**
 - **Entity-based routing**: Each major entity has its own router file
@@ -386,7 +384,7 @@ All endpoints use session-based authentication via `X-Session-ID` header. Access
 ## Future Extensibility
 
 The architecture supports multiple clients:
-- Current: Legacy web (FastAPI + SSR)
+- Current: React frontend (SPA)
 - Planned: CLI client
 - Planned: Telegram bot
 - Possible: Mobile API

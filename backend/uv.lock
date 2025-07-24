@@ -1011,12 +1011,10 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "httpx" },
     { name = "itsdangerous" },
-    { name = "jinja2" },
     { name = "pillow" },
     { name = "pydantic-settings" },
     { name = "pymongo" },
     { name = "python-dotenv" },
-    { name = "python-multipart" },
     { name = "structlog" },
 ]
 
@@ -1038,12 +1036,10 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = "~=0.116.1" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
-    { name = "jinja2", specifier = ">=3.1.6" },
     { name = "pillow", specifier = ">=11.3.0" },
     { name = "pydantic-settings", specifier = ">=2.8.2" },
     { name = "pymongo", specifier = ">=4.13.2" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
-    { name = "python-multipart", specifier = ">=0.0.20" },
     { name = "structlog", specifier = ">=25.4.0" },
 ]
 

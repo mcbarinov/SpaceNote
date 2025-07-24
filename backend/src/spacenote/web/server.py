@@ -17,15 +17,6 @@ from spacenote.web.error_handlers import (
     not_found_handler,
     value_error_handler,
 )
-from spacenote.web.legacy.admin import router as admin_router
-from spacenote.web.legacy.api import router as api_router
-from spacenote.web.legacy.attachment import router as attachment_router
-from spacenote.web.legacy.auth import router as auth_router
-from spacenote.web.legacy.media import router as media_router
-from spacenote.web.legacy.note import router as note_router
-from spacenote.web.legacy.profile import router as profile_router
-from spacenote.web.legacy.space import router as space_router
-from spacenote.web.render import init_jinja
 from spacenote.web.routers import auth_router as new_auth_router
 from spacenote.web.routers import notes_router, spaces_router, users_router
 
@@ -37,7 +28,6 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         """FastAPI application lifespan management."""
         # Store app instance in app state
-        app.state.jinja_env = init_jinja()
         app.state.app = app_instance
         async with app_instance.lifespan():
             yield
@@ -61,14 +51,6 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     async def health_check() -> dict[str, str]:
         return {"status": "healthy"}
 
-    app.include_router(auth_router)
-    app.include_router(admin_router)
-    app.include_router(note_router)
-    app.include_router(space_router)
-    app.include_router(attachment_router)
-    app.include_router(media_router)
-    app.include_router(profile_router)
-    app.include_router(api_router)
     app.include_router(new_auth_router, prefix="/api")
     app.include_router(notes_router, prefix="/api")
     app.include_router(spaces_router, prefix="/api")

@@ -1,56 +1,42 @@
 import logging
 
 from fastapi import Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
-
-from spacenote.web.deps import get_app, get_render, get_session_id
+from fastapi.responses import JSONResponse, Response
 
 logger = logging.getLogger(__name__)
 
 
-async def render_error_page(request: Request, status_code: int, title: str, message: str) -> HTMLResponse:
-    """Render error page using the standalone error template."""
-    session_id = await get_session_id(request)
-    app = await get_app(request)
-    render = await get_render(request, session_id, app)
-    return await render.html("error.j2", status_code=status_code, title=title, message=message)
+def create_json_error_response(status_code: int, title: str, message: str) -> JSONResponse:
+    """Create JSON error response."""
+    return JSONResponse(status_code=status_code, content={"error": title, "detail": message, "status_code": status_code})
 
 
-async def access_denied_handler(request: Request, exc: Exception) -> Response:
+async def access_denied_handler(_: Request, exc: Exception) -> Response:
     """Handle access denied errors (403)."""
-    return await render_error_page(request=request, status_code=403, title="Access Denied", message=str(exc))
+    return create_json_error_response(status_code=403, title="Access Denied", message=str(exc))
 
 
-async def admin_required_handler(request: Request, exc: Exception) -> Response:
+async def admin_required_handler(_: Request, exc: Exception) -> Response:
     """Handle admin required errors (403)."""
-    return await render_error_page(request=request, status_code=403, title="Admin Required", message=str(exc))
+    return create_json_error_response(status_code=403, title="Admin Required", message=str(exc))
 
 
-async def not_found_handler(request: Request, exc: Exception) -> Response:
+async def not_found_handler(_: Request, exc: Exception) -> Response:
     """Handle not found errors (404)."""
-    return await render_error_page(request=request, status_code=404, title="Not Found", message=str(exc))
+    return create_json_error_response(status_code=404, title="Not Found", message=str(exc))
 
 
-async def value_error_handler(request: Request, exc: Exception) -> Response:
+async def value_error_handler(_: Request, exc: Exception) -> Response:
     """Handle validation errors (400)."""
-    return await render_error_page(request=request, status_code=400, title="Invalid Request", message=str(exc))
+    return create_json_error_response(status_code=400, title="Invalid Request", message=str(exc))
 
 
-async def authentication_error_handler(request: Request, exc: Exception) -> Response:
-    """Handle authentication errors by redirecting to login."""
-    # Check if this is an API request by looking at headers or path
-    if request.url.path.startswith("/api/") or request.headers.get("content-type") == "application/json":
-        # For API requests, return JSON response
-        return JSONResponse(status_code=401, content={"detail": "Authentication required", "message": str(exc)})
-
-    # For web pages, redirect to login
-    return RedirectResponse(url="/login", status_code=302)
+async def authentication_error_handler(_: Request, exc: Exception) -> Response:
+    """Handle authentication errors."""
+    return JSONResponse(status_code=401, content={"error": "Authentication Required", "detail": str(exc), "status_code": 401})
 
 
-async def general_exception_handler(request: Request, exc: Exception) -> Response:
+async def general_exception_handler(_: Request, exc: Exception) -> Response:
     """Handle unexpected errors (500)."""
     logger.exception("Unexpected error: %s", exc)
-
-    return await render_error_page(
-        request=request, status_code=500, title="Internal Server Error", message="An unexpected error occurred."
-    )
+    return create_json_error_response(status_code=500, title="Internal Server Error", message="An unexpected error occurred.")

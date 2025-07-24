@@ -1,19 +1,17 @@
 # SpaceNote Frontend Architecture
 
-## Frontend (Main Implementation)
-
 **Status**: Active development
 **Location**: `/frontend`
 **Port**: `SPACENOTE_FRONTEND_PORT` (default: 3002)
 
-This is the primary frontend implementation being developed for SpaceNote. It represents a clean, modern approach to building the user interface with lessons learned from previous implementations.
+SpaceNote's modern frontend implementation built with React and TypeScript. This provides a clean, responsive user interface for managing spaces and notes.
 
 **Goals:**
-- Clean architecture from ground up
-- Improved state management patterns
-- Better TypeScript usage
-- Optimized bundle size
-- Modern React patterns
+- Modern React architecture
+- Type-safe development with TypeScript
+- Optimized bundle size and performance
+- Clean state management patterns
+- Responsive, accessible UI components
 
 ### Technology Stack
 
@@ -40,60 +38,9 @@ This is the primary frontend implementation being developed for SpaceNote. It re
 - TipTap 3 for markdown editing with WYSIWYG interface
 
 
-## Legacy Web (Server-Side Rendering)
-
-**Status**: Maintained alongside main frontend
-**Location**: `spacenote/web/`
-**Port**: `SPACENOTE_PORT` (default: 3000)
-
-The legacy web implementation uses server-side rendering and provides a fully functional SpaceNote experience without JavaScript dependencies.
-
-**Technology Stack:**
-- FastAPI for routing and API endpoints
-- Jinja2 templates for HTML generation
-- Pico CSS for semantic, minimal styling
-- Vanilla JavaScript for progressive enhancement
-
-**Architecture Principles:**
-- Server-side rendering for simplicity and performance
-- Progressive enhancement approach
-- Minimal JavaScript usage
-- Semantic HTML with Pico CSS styling
-
-**Template Guidelines:**
-- Use Pico CSS semantic classes
-- Keep templates simple and readable
-- Minimize custom CSS
-- Focus on functionality over aesthetics during prototyping
-
-**Development Commands:**
-```bash
-# Legacy web only
-just dev
-
-# Backend + legacy web
-just dev-all
-```
-
 ## Development Strategy
 
-### Dual Frontend Approach
-SpaceNote provides two frontend implementations:
-- **Frontend**: Modern SPA with full JavaScript functionality
-- **Legacy**: Server-rendered pages with progressive enhancement
-
-### API Compatibility
-Both implementations share the same backend API:
-- RESTful endpoints for data operations
-- Session-based authentication
-- Consistent error handling
-- Same business logic validation
-
-### Migration Path
-Users can choose their preferred interface:
-- Power users may prefer the modern frontend
-- Users preferring simplicity may use legacy web
-- Both will be maintained long-term
+SpaceNote uses a modern single-page application (SPA) architecture built with React. The backend provides a comprehensive REST API that serves the frontend application.
 
 ## API Design
 

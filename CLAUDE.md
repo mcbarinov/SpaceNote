@@ -110,29 +110,16 @@ from module.x import SomeClass
 
 ## API Router Structure
 
-**IMPORTANT**: SpaceNote has two independent frontends, each with its own API routes:
+SpaceNote has a single React frontend that communicates with the backend via API routes:
 
-1. **Legacy Web (Jinja2/SSR)** - `web/legacy/`
-   - Server-side rendered pages using Jinja2 templates
-   - Routes in `web/legacy/` are ONLY for this frontend
-   - Includes `web/legacy/api.py` for AJAX endpoints used by legacy frontend
+- **Frontend (React/SPA)** - `frontend/`
+  - Modern React SPA on port 3002
+  - API routes are in `web/routers/` 
+  - Create new router files like `web/routers/spaces.py` for new API endpoints
+  - These routes should follow RESTful patterns as described in architecture docs
 
-2. **New Frontend (React/SPA)** - `frontend/`
-   - Modern React SPA on port 3002
-   - API routes should be in `web/routers/` (NOT `web/legacy/`)
-   - Create new router files like `web/routers/spaces.py` for new API endpoints
-   - These routes should follow RESTful patterns as described in architecture docs
+When implementing new API endpoints, always create them in `web/routers/`.
 
-When implementing new API endpoints for the React frontend, always create them in `web/routers/`, never in `web/legacy/`.
-
-## Template Writing Guidelines
-
-Since we are in the prototyping phase:
-- Use Pico CSS framework
-- Minimize HTML tags - use as few as possible
-- Minimize CSS classes - use as few as possible
-- Focus on functionality over aesthetics
-- Beauty and polish will come later - prioritize minimalism now
 
 ## Error Handling Guidelines
 
