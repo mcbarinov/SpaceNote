@@ -19,6 +19,11 @@ class LoginResponse(BaseModel):
     user_id: str
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
 @cbv(router)
 class AuthApi:
     """API endpoints for authentication."""
@@ -37,3 +42,20 @@ class AuthApi:
             raise HTTPException(status_code=401, detail="Invalid username or password")
 
         return LoginResponse(session_id=session_id, user_id=login_data.username)
+
+    @router.post("/auth/change-password")
+    async def change_password(self, data: ChangePasswordRequest) -> dict[str, str]:
+        """Change password for current user."""
+        if not self.session_id:
+            raise HTTPException(status_code=401, detail="Not authenticated")
+
+        try:
+            await self.app.change_password(self.session_id, data.current_password, data.new_password)
+        except ValueError as e:
+            # Check if it's specifically about incorrect password
+            error_msg = str(e)
+            if "incorrect" in error_msg.lower() or "invalid" in error_msg.lower():
+                raise HTTPException(status_code=401, detail="Current password is incorrect") from e
+            raise HTTPException(status_code=400, detail=error_msg) from e
+        else:
+            return {"message": "Password changed successfully"}

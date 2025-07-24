@@ -1,8 +1,13 @@
 import { RouterProvider } from "react-router"
 import { router } from "./router"
+import { DialogProvider } from "./lib/dialog"
 
 function App() {
-  return <RouterProvider router={router} />
+  return (
+    <DialogProvider>
+      <RouterProvider router={router} />
+    </DialogProvider>
+  )
 }
 
 export default App

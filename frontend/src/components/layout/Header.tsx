@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router"
 import { useAuthStore } from "@/stores/authStore"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown, User } from "lucide-react"
+import { useDialog } from "@/lib/dialog"
 
 export default function Header() {
   const navigate = useNavigate()
@@ -10,6 +11,23 @@ export default function Header() {
   const handleLogout = () => {
     logout()
     navigate("/login")
+  }
+
+  const dialog = useDialog()
+
+  const handleChangePassword = () => {
+    dialog
+      .open("changePassword")
+      .then(result => {
+        console.log("Password change result:", result)
+        // After password change, all sessions are invalidated
+        // Redirect to login
+        logout()
+        navigate("/login")
+      })
+      .catch(error => {
+        console.error("Password change failed:", error)
+      })
   }
   return (
     <header className="border-b px-6">
@@ -25,7 +43,7 @@ export default function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Spaces</DropdownMenuItem>
-            <DropdownMenuItem>Change Password</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleChangePassword}>Change Password</DropdownMenuItem>
             <DropdownMenuItem onClick={handleLogout} className="text-destructive">
               Logout
             </DropdownMenuItem>

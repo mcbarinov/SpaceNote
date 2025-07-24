@@ -1,3 +1,6 @@
+dev:
+    pnpm run dev
+
 format:
     pnpm run format
 
