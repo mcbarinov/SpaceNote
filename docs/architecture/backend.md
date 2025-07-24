@@ -37,8 +37,9 @@ spacenote/
 │   ├── attachment/    # File management
 │   ├── telegram/      # Telegram integration
 │   └── access/        # Access control
-├── web/               # Legacy web client (FastAPI + SSR)
-│   ├── api/          # New API endpoints
+├── web/               # Web layer (FastAPI)
+│   ├── routers/      # New API endpoints (HTTP API approach)
+│   ├── legacy/       # Legacy SSR endpoints
 │   └── templates/    # Jinja2 templates
 └── scripts/          # Utility scripts
 ```
@@ -334,6 +335,53 @@ class CoreConfig(BaseSettings):
         env_prefix="SPACENOTE_"
     )
 ```
+
+## API Router Architecture
+
+### HTTP API Approach
+
+SpaceNote uses an **HTTP API approach** rather than strict REST for the new frontend API (`/api/...`):
+
+**Design Philosophy:**
+- **Entity-based routing**: Each major entity has its own router file
+- **Query parameters for context**: Required parameters like `space_id` passed as query params
+- **Shorter URLs**: `/api/notes?space_id=123` vs `/api/spaces/123/notes`
+- **Consistent naming**: All ID parameters use `_id` suffix
+
+**Router Organization:**
+```
+web/routers/
+├── __init__.py          # Router registry
+├── auth.py             # Authentication endpoints
+├── spaces.py           # Space management and filters
+├── notes.py            # Note operations
+├── attachments.py      # File operations (future)
+└── comments.py         # Comment operations (future)
+```
+
+**Example API Structure:**
+```python
+# spaces.py
+@router.get("/spaces")                          # List spaces
+@router.get("/spaces/{space_id}")               # Space details (includes filters)
+
+# notes.py  
+@router.get("/notes")                           # ?space_id=123&filter_id=active
+@router.get("/notes/{note_id}")                 # ?space_id=123
+```
+
+**Benefits:**
+- Clear separation of concerns
+- Simpler URLs for frontend developers
+- Easy to add filtering/pagination parameters
+- Flexible and maintainable
+
+### Security Model
+
+All endpoints use session-based authentication via `X-Session-ID` header. Access control is enforced at the App layer, ensuring that:
+- Users can only access spaces they're members of
+- Admin users have full access
+- Data isolation is maintained between spaces
 
 ## Future Extensibility
 

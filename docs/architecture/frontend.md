@@ -97,20 +97,43 @@ Users can choose their preferred interface:
 
 ## API Design
 
+SpaceNote uses an **HTTP API approach** rather than strict REST for better simplicity and developer experience.
+
+### API Design Philosophy
+
+- **HTTP API over REST**: Prioritizes simplicity and short URLs over strict REST compliance
+- **Query parameters for context**: Uses `space_id`, `filter_id`, `note_id` parameters with `_id` suffix for consistency
+- **Entity-based routing**: Each major entity (`notes`, `spaces`, `attachments`) has its own router
+- **Mandatory context**: All operations require appropriate context (e.g., `space_id` for notes)
+
 ### Endpoint Structure
 ```
-GET    /api/spaces                 # List user's spaces
-POST   /api/spaces                 # Create new space
-GET    /api/spaces/:id            # Get space details
-PUT    /api/spaces/:id            # Update space
-DELETE /api/spaces/:id            # Delete space
+# Spaces management
+GET    /api/spaces                      # List user's spaces
+GET    /api/spaces/{space_id}           # Get space details (includes filters)
 
-GET    /api/spaces/:id/notes      # List notes in space
-POST   /api/spaces/:id/notes      # Create note
-GET    /api/spaces/:id/notes/:nid # Get note details
-PUT    /api/spaces/:id/notes/:nid # Update note
-DELETE /api/spaces/:id/notes/:nid # Delete note
+# Notes operations
+GET    /api/notes?space_id={id}         # List notes in space
+GET    /api/notes?space_id={id}&filter_id={filter}&page=1
+POST   /api/notes?space_id={id}         # Create note
+GET    /api/notes/{note_id}?space_id={id}  # Get note details
+PUT    /api/notes/{note_id}?space_id={id}  # Update note
+DELETE /api/notes/{note_id}?space_id={id}  # Delete note
+
+# Comments operations (future)
+GET    /api/comments?space_id={id}&note_id={note}  # List comments
+POST   /api/comments?space_id={id}&note_id={note}  # Create comment
+
+# Attachments operations (future)  
+GET    /api/attachments?space_id={id}   # List space attachments
+GET    /api/attachments?space_id={id}&note_id={note}  # Note attachments
 ```
+
+**Benefits of this approach:**
+- **Shorter URLs**: `/api/notes?space_id=my-tasks` vs `/api/spaces/my-tasks/notes`
+- **Clear separation**: Each entity has its own router file
+- **Flexible parameters**: Easy to add filtering, pagination, sorting
+- **Consistent naming**: All ID parameters use `_id` suffix
 
 ### Authentication
 Session-based authentication with header:
