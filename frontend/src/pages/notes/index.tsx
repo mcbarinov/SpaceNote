@@ -1,28 +1,10 @@
-import { useEffect, useState } from "react"
 import { Link } from "react-router"
-import { spacesApi, type Space } from "../../lib/api"
+import { useSpacesStore } from "@/stores/spacesStore"
 
 export default function NotesIndexPage() {
-  const [spaces, setSpaces] = useState<Space[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { spaces, isLoading, error } = useSpacesStore()
 
-  useEffect(() => {
-    const fetchSpaces = async () => {
-      try {
-        const spaces = await spacesApi.listSpaces()
-        setSpaces(spaces)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load spaces")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchSpaces()
-  }, [])
-
-  if (loading) {
+  if (isLoading) {
     return <div>Loading spaces...</div>
   }
 

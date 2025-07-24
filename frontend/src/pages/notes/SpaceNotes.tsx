@@ -1,45 +1,40 @@
 import { useParams, Link } from "react-router"
 import { useEffect, useState } from "react"
-import { notesApi, spacesApi, type Filter, type PaginationResult, type Space } from "../../lib/api"
+import { notesApi, type Filter, type PaginationResult } from "../../lib/api"
 import { NotesTable } from "../../components/NotesTable"
 import { FilterDropdown } from "../../components/FilterDropdown"
+import { useSpacesStore } from "@/stores/spacesStore"
 
 export default function SpaceNotes() {
   const { spaceId } = useParams<{ spaceId: string }>()
-  const [space, setSpace] = useState<Space | null>(null)
+  const space = useSpacesStore(state => state.getSpace(spaceId || ""))
   const [notesData, setNotesData] = useState<PaginationResult | null>(null)
-  const [filters, setFilters] = useState<Filter[]>([])
   const [selectedFilter, setSelectedFilter] = useState<Filter | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!spaceId) return
+    if (!spaceId || !space) return
 
-    const loadData = async () => {
+    const loadNotes = async () => {
       try {
         setLoading(true)
         setError(null)
 
-        // Load space info
-        const spaceResponse = await spacesApi.getSpace(spaceId)
-        setSpace(spaceResponse)
-        setFilters(spaceResponse.filters)
-
-        // Load notes
+        // Load notes only - space data comes from cache
         const notesResponse = await notesApi.listNotes(spaceId, {
           filterId: selectedFilter?.id,
         })
         setNotesData(notesResponse)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load data")
+        setError(err instanceof Error ? err.message : "Failed to load notes")
       } finally {
         setLoading(false)
       }
     }
 
-    loadData()
-  }, [spaceId, selectedFilter])
+    loadNotes()
+  }, [spaceId, selectedFilter, space])
 
   const handleFilterSelect = async (filter: Filter | null) => {
     if (!spaceId) return
@@ -75,7 +70,7 @@ export default function SpaceNotes() {
         <Link to="/notes" className="hover:underline">
           ← Back to spaces
         </Link>
-        <div className="mt-4">No data found</div>
+        <div className="mt-4">Loading...</div>
       </div>
     )
   }
@@ -89,7 +84,7 @@ export default function SpaceNotes() {
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Notes / {space.name}</h1>
         <div className="flex items-center gap-4">
-          <FilterDropdown filters={filters} selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} />
+          <FilterDropdown filters={space.filters} selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} />
           <span className="text-sm text-gray-600">{notesData.total_count} per page</span>
         </div>
       </div>

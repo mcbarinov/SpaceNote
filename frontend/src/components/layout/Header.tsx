@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router"
 import { useAuthStore } from "@/stores/authStore"
+import { useSpacesStore } from "@/stores/spacesStore"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,16 +8,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown, User } from "lucide-react"
+import { ChevronDown, User, RefreshCw } from "lucide-react"
 import { useDialog } from "@/lib/dialog"
 
 export default function Header() {
   const navigate = useNavigate()
   const { userId, logout } = useAuthStore()
+  const refreshSpaces = useSpacesStore(state => state.refreshSpaces)
 
   const handleLogout = () => {
     logout()
     navigate("/login")
+  }
+
+  const handleRefreshSpaces = async () => {
+    await refreshSpaces()
   }
 
   const dialog = useDialog()
@@ -55,6 +61,10 @@ export default function Header() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Spaces</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleRefreshSpaces}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh spaces info
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleChangePassword}>Change Password</DropdownMenuItem>
             {isAdmin && (
               <>
