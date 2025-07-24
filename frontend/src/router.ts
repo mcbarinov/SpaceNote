@@ -1,16 +1,12 @@
-import { createBrowserRouter, redirect } from "react-router"
+import { createBrowserRouter } from "react-router"
 import Layout from "./components/layout/Layout"
 import LoginPage from "./pages/login"
-import NotesIndexPage from "./pages/notes"
+import IndexPage from "./pages/IndexPage"
 import SpaceNotes from "./pages/notes/SpaceNotes"
 import NoteDetail from "./pages/notes/NoteDetail"
 import { requireAuth } from "./lib/auth"
 
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    loader: () => redirect("/notes"),
-  },
   {
     path: "/login",
     Component: LoginPage,
@@ -21,8 +17,8 @@ export const router = createBrowserRouter([
     loader: requireAuth,
     children: [
       {
-        path: "notes",
-        Component: NotesIndexPage,
+        index: true,
+        Component: IndexPage,
       },
       {
         path: "notes/:spaceId",

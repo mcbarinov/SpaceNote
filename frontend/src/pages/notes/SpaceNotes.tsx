@@ -43,44 +43,19 @@ export default function SpaceNotes() {
   }
 
   if (loading) {
-    return (
-      <div>
-        <Link to="/notes" className="hover:underline">
-          ← Back to spaces
-        </Link>
-        <div className="mt-4">Loading...</div>
-      </div>
-    )
+    return <div className="mt-4">Loading...</div>
   }
 
   if (error) {
-    return (
-      <div>
-        <Link to="/notes" className="hover:underline">
-          ← Back to spaces
-        </Link>
-        <div className="mt-4 text-red-600">Error: {error}</div>
-      </div>
-    )
+    return <div className="mt-4 text-red-600">Error: {error}</div>
   }
 
   if (!space || !notesData) {
-    return (
-      <div>
-        <Link to="/notes" className="hover:underline">
-          ← Back to spaces
-        </Link>
-        <div className="mt-4">Loading...</div>
-      </div>
-    )
+    return <div className="mt-4">Loading...</div>
   }
 
   return (
     <div>
-      <Link to="/notes" className="hover:underline">
-        ← Back to spaces
-      </Link>
-
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Notes / {space.name}</h1>
         <div className="flex items-center gap-4">
