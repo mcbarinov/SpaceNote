@@ -1,20 +1,16 @@
 import { useNavigate, useParams } from "react-router"
 import type { Note } from "@/lib/api/notes"
+import type { Space } from "@/lib/api/spaces"
 import { formatFieldValue, formatDateOnly } from "@/lib/formatters"
+import { Markdown } from "@/components/Markdown"
 
 interface NotesTableProps {
   notes: Note[]
   listFields: string[]
+  space: Space
 }
 
-function getCellValue(note: Note, field: string): string {
-  if (field === "id") return `#${note.id}`
-  if (field === "author") return note.author
-  if (field === "created_at") return formatDateOnly(note.created_at)
-  return formatFieldValue(note.fields[field])
-}
-
-export function NotesTable({ notes, listFields }: NotesTableProps) {
+export function NotesTable({ notes, listFields, space }: NotesTableProps) {
   const navigate = useNavigate()
   const { spaceId } = useParams<{ spaceId: string }>()
 
@@ -34,11 +30,28 @@ export function NotesTable({ notes, listFields }: NotesTableProps) {
       <tbody>
         {notes.map(note => (
           <tr key={note.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/notes/${spaceId}/${note.id}`)}>
-            {fieldsToShow.map(field => (
-              <td key={field} className="border border-gray-300 px-4 py-2">
-                {getCellValue(note, field)}
-              </td>
-            ))}
+            {fieldsToShow.map(field => {
+              const fieldDef = space.fields.find(f => f.name === field)
+              let cellContent
+
+              if (field === "id") {
+                cellContent = `#${note.id}`
+              } else if (field === "author") {
+                cellContent = note.author
+              } else if (field === "created_at") {
+                cellContent = formatDateOnly(note.created_at)
+              } else if (fieldDef?.type === "markdown") {
+                cellContent = <Markdown content={String(note.fields[field] || "")} />
+              } else {
+                cellContent = formatFieldValue(note.fields[field])
+              }
+
+              return (
+                <td key={field} className="border border-gray-300 px-4 py-2">
+                  {cellContent}
+                </td>
+              )
+            })}
           </tr>
         ))}
       </tbody>

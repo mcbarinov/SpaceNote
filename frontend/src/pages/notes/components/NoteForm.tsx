@@ -1,13 +1,20 @@
-import { useForm, type UseFormRegister, type UseFormSetValue, type FieldError, type Resolver } from "react-hook-form"
+import {
+  useForm,
+  type UseFormRegister,
+  type UseFormSetValue,
+  type FieldError,
+  type Resolver,
+  type UseFormWatch,
+} from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Space, SpaceField } from "@/lib/api/spaces"
+import { MarkdownField } from "./MarkdownField"
 
 interface NoteFormProps {
   space: Space
@@ -42,6 +49,7 @@ const getInputComponent = (
   space: Space,
   register: UseFormRegister<Record<string, string>>,
   setValue: UseFormSetValue<Record<string, string>>,
+  watch: UseFormWatch<Record<string, string>>,
   error: FieldError | undefined,
   defaultValue: string
 ) => {
@@ -52,7 +60,7 @@ const getInputComponent = (
 
   switch (field.type) {
     case "markdown":
-      return <Textarea {...commonProps} {...register(field.name)} rows={6} placeholder="You can use markdown formatting..." />
+      return <MarkdownField fieldName={field.name} register={register} watch={watch} error={error} />
 
     case "boolean":
       return (
@@ -178,6 +186,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading, initialValues = {
     handleSubmit,
     formState: { errors },
     setValue,
+    watch,
   } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
     defaultValues: Object.fromEntries(visibleFields.map(field => [field.name, getDefaultValue(field)])),
@@ -205,7 +214,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading, initialValues = {
 
     return (
       <FieldWrapper key={field.name} field={field} error={error} helpText={helpText}>
-        {getInputComponent(field, space, register, setValue, error, defaultValue)}
+        {getInputComponent(field, space, register, setValue, watch, error, defaultValue)}
       </FieldWrapper>
     )
   }

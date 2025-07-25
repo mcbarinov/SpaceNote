@@ -6,6 +6,7 @@ import { formatFieldValue, formatDateTime } from "../../lib/formatters"
 import { Button } from "@/components/ui/button"
 import { NoteBreadcrumb } from "./components/NoteBreadcrumb"
 import { Comments } from "./components/Comments"
+import { Markdown } from "@/components/Markdown"
 
 export default function NoteDetail() {
   const { spaceId, noteId } = useParams<{ spaceId: string; noteId: string }>()
@@ -88,11 +89,7 @@ export default function NoteDetail() {
               <div key={field.name}>
                 <h3 className="font-semibold text-gray-700 mb-1">{field.name}</h3>
                 <div className="text-gray-900">
-                  {field.type === "markdown" ? (
-                    <div className="prose max-w-none">{formatFieldValue(value)}</div>
-                  ) : (
-                    <p>{formatFieldValue(value)}</p>
-                  )}
+                  {field.type === "markdown" ? <Markdown content={String(value || "")} /> : <p>{formatFieldValue(value)}</p>}
                 </div>
               </div>
             )

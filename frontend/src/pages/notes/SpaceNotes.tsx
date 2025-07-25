@@ -95,7 +95,7 @@ export default function SpaceNotes() {
         of {notesData.total_count} notes
       </div>
 
-      <NotesTable notes={notesData.notes} listFields={selectedFilter?.list_fields || space.list_fields} />
+      <NotesTable notes={notesData.notes} listFields={selectedFilter?.list_fields || space.list_fields} space={space} />
 
       <div className="mt-8">
         <PaginationControls
