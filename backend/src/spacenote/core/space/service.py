@@ -92,10 +92,13 @@ class SpaceService(Service):
         """Update which fields are shown in the notes list."""
         space = self.get_space(space_id)
 
+        # System fields that are always available
+        system_fields = {"id", "author", "created_at"}
+
         # Validate that all field names exist
         existing_field_names = {field.name for field in space.fields}
         for field_name in field_names:
-            if field_name not in existing_field_names:
+            if field_name not in existing_field_names and field_name not in system_fields:
                 raise ValueError(f"Field '{field_name}' does not exist in space")
 
         await self._collection.update_one({"_id": space_id}, {"$set": {"list_fields": field_names}})

@@ -7,35 +7,38 @@ interface NotesTableProps {
   listFields: string[]
 }
 
+function getCellValue(note: Note, field: string): string {
+  if (field === "id") return `#${note.id}`
+  if (field === "author") return note.author
+  if (field === "created_at") return formatDateOnly(note.created_at)
+  return formatFieldValue(note.fields[field])
+}
+
 export function NotesTable({ notes, listFields }: NotesTableProps) {
   const navigate = useNavigate()
   const { spaceId } = useParams<{ spaceId: string }>()
+
+  const fieldsToShow = listFields.length === 0 ? ["id", "author", "created_at"] : listFields
 
   return (
     <table className="w-full border-collapse border border-gray-300">
       <thead>
         <tr className="bg-gray-50">
-          <th className="border border-gray-300 px-4 py-2 text-left">id</th>
-          {listFields.map(field => (
+          {fieldsToShow.map(field => (
             <th key={field} className="border border-gray-300 px-4 py-2 text-left">
               {field}
             </th>
           ))}
-          <th className="border border-gray-300 px-4 py-2 text-left">author</th>
-          <th className="border border-gray-300 px-4 py-2 text-left">created</th>
         </tr>
       </thead>
       <tbody>
         {notes.map(note => (
           <tr key={note.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/notes/${spaceId}/${note.id}`)}>
-            <td className="border border-gray-300 px-4 py-2 font-medium">#{note.id}</td>
-            {listFields.map(field => (
+            {fieldsToShow.map(field => (
               <td key={field} className="border border-gray-300 px-4 py-2">
-                {formatFieldValue(note.fields[field])}
+                {getCellValue(note, field)}
               </td>
             ))}
-            <td className="border border-gray-300 px-4 py-2">{note.author}</td>
-            <td className="border border-gray-300 px-4 py-2">{formatDateOnly(note.created_at)}</td>
           </tr>
         ))}
       </tbody>

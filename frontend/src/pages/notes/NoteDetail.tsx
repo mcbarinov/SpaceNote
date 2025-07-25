@@ -1,8 +1,16 @@
-import { useParams } from "react-router"
+import { useParams, Link } from "react-router"
 import { useEffect, useState } from "react"
 import { notesApi, type Note } from "../../lib/api"
 import { useSpacesStore } from "@/stores/spacesStore"
 import { formatFieldValue, formatDateTime } from "../../lib/formatters"
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
 
 export default function NoteDetail() {
   const { spaceId, noteId } = useParams<{ spaceId: string; noteId: string }>()
@@ -44,6 +52,20 @@ export default function NoteDetail() {
 
   return (
     <div>
+      <Breadcrumb className="my-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to={`/notes/${spaceId}`}>Notes / {space.name}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Note #{note.id}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+
       <h1 className="text-2xl font-bold my-4">Note #{note.id}</h1>
 
       <div className="bg-white border border-gray-300 rounded-lg p-6 mt-4">
