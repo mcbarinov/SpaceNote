@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Check, X } from "lucide-react"
 import { useDialog } from "@/lib/dialog"
+import { Link } from "react-router"
 
 export default function SpacesPage() {
   const { spaces, isLoading, error } = useSpacesStore()
@@ -37,7 +38,11 @@ export default function SpacesPage() {
                   <td className="p-4 font-mono text-sm">{space.id}</td>
                   <td className="p-4">{space.name}</td>
                   <td className="p-4 text-center">{space.members.length}</td>
-                  <td className="p-4 text-center">{space.fields.length}</td>
+                  <td className="p-4 text-center">
+                    <Link to={`/spaces/${space.id}/fields`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                      {space.fields.length}
+                    </Link>
+                  </td>
                   <td className="p-4 text-center">{space.filters.length}</td>
                   <td className="p-4 text-center">
                     {space.telegram?.enabled ? (

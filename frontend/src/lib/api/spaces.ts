@@ -60,4 +60,12 @@ export const spacesApi = {
   createSpace: async (data: CreateSpaceRequest): Promise<Space> => {
     return await api.post("spaces", { json: data }).json()
   },
+
+  updateListFields: async (spaceId: string, fieldNames: string[]): Promise<void> => {
+    await api.put(`spaces/${spaceId}/list-fields`, { json: { field_names: fieldNames } })
+  },
+
+  updateHiddenCreateFields: async (spaceId: string, fieldNames: string[]): Promise<void> => {
+    await api.put(`spaces/${spaceId}/hidden-create-fields`, { json: { field_names: fieldNames } })
+  },
 }

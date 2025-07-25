@@ -1,8 +1,9 @@
-import { useParams } from "react-router"
+import { useParams, Link } from "react-router"
 import { useEffect, useState } from "react"
 import { notesApi, type Filter, type PaginationResult } from "../../lib/api"
 import { NotesTable } from "../../components/NotesTable"
 import { FilterDropdown } from "../../components/FilterDropdown"
+import { Button } from "../../components/ui/button"
 import { useSpacesStore } from "@/stores/spacesStore"
 
 export default function SpaceNotes() {
@@ -59,6 +60,11 @@ export default function SpaceNotes() {
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Notes / {space.name}</h1>
         <div className="flex items-center gap-4">
+          <Link to={`/spaces/${spaceId}/fields`}>
+            <Button variant="outline" size="sm">
+              Fields
+            </Button>
+          </Link>
           <FilterDropdown filters={space.filters} selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} />
           <span className="text-sm text-gray-600">{notesData.total_count} per page</span>
         </div>

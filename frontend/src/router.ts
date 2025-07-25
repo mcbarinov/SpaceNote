@@ -5,6 +5,7 @@ import IndexPage from "./pages/IndexPage"
 import SpaceNotes from "./pages/notes/SpaceNotes"
 import NoteDetail from "./pages/notes/NoteDetail"
 import SpacesPage from "./pages/spaces"
+import SpaceFields from "./pages/spaces/SpaceFields"
 import { requireAuth } from "./lib/auth"
 
 export const router = createBrowserRouter([
@@ -24,6 +25,10 @@ export const router = createBrowserRouter([
       {
         path: "spaces",
         Component: SpacesPage,
+      },
+      {
+        path: "spaces/:spaceId/fields",
+        Component: SpaceFields,
       },
       {
         path: "notes/:spaceId",

@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router"
+import { useParams } from "react-router"
 import { useEffect, useState } from "react"
 import { notesApi, type Note } from "../../lib/api"
 import { useSpacesStore } from "@/stores/spacesStore"
