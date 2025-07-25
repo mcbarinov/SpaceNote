@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { BaseDialogProps } from "@/lib/dialog"
 import { authApi } from "@/lib/api/auth"
+import { toast } from "sonner"
 
 export function ChangePasswordDialog({ onClose, onSuccess }: BaseDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string>()
+  const [clientError, setClientError] = useState<string>()
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -19,34 +20,21 @@ export function ChangePasswordDialog({ onClose, onSuccess }: BaseDialogProps) {
     const newPassword = formData.get("newPassword") as string
     const confirmPassword = formData.get("confirmPassword") as string
 
-    // Only client-side check - password match
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match")
+      setClientError("Passwords do not match")
       return
     }
 
     setIsSubmitting(true)
-    setError(undefined)
-
-    try {
-      await authApi.changePassword({
-        currentPassword,
-        newPassword,
-      })
-      onSuccess?.("Password changed successfully")
-      onClose()
-    } catch (err) {
-      // Show backend error directly
-      if (err instanceof Error) {
-        // Check if it's an HTTP error with response
-        const httpError = err as Error & { response?: { data?: { detail?: string } } }
-        setError(httpError.response?.data?.detail || "Failed to change password")
-      } else {
-        setError("Failed to change password")
-      }
-    } finally {
-      setIsSubmitting(false)
-    }
+    setClientError(undefined)
+    await authApi.changePassword({
+      currentPassword,
+      newPassword,
+    })
+    toast.success("Password changed successfully")
+    onSuccess?.("Password changed successfully")
+    onClose()
+    setIsSubmitting(false)
   }
 
   return (
@@ -94,7 +82,7 @@ export function ChangePasswordDialog({ onClose, onSuccess }: BaseDialogProps) {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {clientError && <p className="text-sm text-red-600">{clientError}</p>}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>

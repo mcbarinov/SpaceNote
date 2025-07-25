@@ -7,10 +7,10 @@ import { Label } from "@/components/ui/label"
 import type { BaseDialogProps } from "@/lib/dialog"
 import { spacesApi } from "@/lib/api/spaces"
 import { useSpacesStore } from "@/stores/spacesStore"
+import { toast } from "sonner"
 
 export function CreateSpaceDialog({ onClose, onSuccess }: BaseDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string>()
   const refreshSpaces = useSpacesStore(state => state.refreshSpaces)
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -21,18 +21,12 @@ export function CreateSpaceDialog({ onClose, onSuccess }: BaseDialogProps) {
     const name = formData.get("name") as string
 
     setIsSubmitting(true)
-    setError(undefined)
-
-    try {
-      await spacesApi.createSpace({ id, name })
-      await refreshSpaces()
-      onSuccess?.("Space created successfully")
-      onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create space")
-    } finally {
-      setIsSubmitting(false)
-    }
+    await spacesApi.createSpace({ id, name })
+    await refreshSpaces()
+    toast.success("Space created successfully")
+    onSuccess?.("Space created successfully")
+    onClose()
+    setIsSubmitting(false)
   }
 
   return (
@@ -63,8 +57,6 @@ export function CreateSpaceDialog({ onClose, onSuccess }: BaseDialogProps) {
             <Label htmlFor="name">Space Name</Label>
             <Input id="name" name="name" type="text" placeholder="My Space" required disabled={isSubmitting} />
           </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>

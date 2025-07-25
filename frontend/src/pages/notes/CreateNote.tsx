@@ -17,25 +17,15 @@ export default function CreateNote() {
   const navigate = useNavigate()
   const space = useSpacesStore(state => state.getSpace(spaceId || ""))
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (fields: Record<string, string>) => {
     if (!spaceId) return
 
-    try {
-      setLoading(true)
-      setError(null)
-
-      const request: CreateNoteRequest = { fields }
-      const createdNote = await notesApi.createNote(spaceId, request)
-
-      // Navigate to the created note
-      navigate(`/notes/${spaceId}/${createdNote.id}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create note")
-    } finally {
-      setLoading(false)
-    }
+    setLoading(true)
+    const request: CreateNoteRequest = { fields }
+    const createdNote = await notesApi.createNote(spaceId, request)
+    navigate(`/notes/${spaceId}/${createdNote.id}`)
+    setLoading(false)
   }
 
   const handleCancel = () => {
@@ -63,8 +53,6 @@ export default function CreateNote() {
       </Breadcrumb>
 
       <h1 className="text-2xl font-bold my-4">Create New Note</h1>
-
-      {error && <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4">{error}</div>}
 
       <div className="bg-white border border-gray-300 rounded-lg p-6">
         <NoteForm space={space} onSubmit={handleSubmit} onCancel={handleCancel} loading={loading} />
