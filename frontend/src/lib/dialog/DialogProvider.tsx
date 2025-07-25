@@ -1,4 +1,4 @@
-import { useState, useCallback, Suspense } from "react"
+import { useState, useCallback } from "react"
 import { DialogContext } from "./DialogContext"
 import { dialogRegistry } from "./registry"
 import type { DialogState, DialogContextType } from "./types"
@@ -79,9 +79,7 @@ export function DialogProvider({ children }: DialogProviderProps) {
 
       {/* Render all open dialogs */}
       {dialogs.map(({ id, component: Component, props }) => (
-        <Suspense key={id} fallback={<div>Loading dialog...</div>}>
-          <Component {...props} onClose={() => closeDialog(id)} onSuccess={result => closeDialog(id, result)} />
-        </Suspense>
+        <Component key={id} {...props} onClose={() => closeDialog(id)} onSuccess={result => closeDialog(id, result)} />
       ))}
     </DialogContext.Provider>
   )

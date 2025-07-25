@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router"
+import { useNavigate, Link } from "react-router"
 import { useAuthStore } from "@/stores/authStore"
 import {
   DropdownMenu,
@@ -44,14 +44,16 @@ export default function UserMenu() {
         <ChevronDown className="w-3 h-3" />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={handleChangePassword}>Change Password</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/spaces">Manage Spaces</Link>
+        </DropdownMenuItem>
         {isAdmin && (
           <>
-            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleManageUsers}>Manage Users</DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleChangePassword}>Change Password</DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
           Logout
         </DropdownMenuItem>

@@ -43,6 +43,11 @@ export interface Space {
   telegram?: TelegramConfig
 }
 
+export interface CreateSpaceRequest {
+  id: string
+  name: string
+}
+
 export const spacesApi = {
   listSpaces: async (): Promise<Space[]> => {
     return await api.get("spaces").json()
@@ -50,5 +55,9 @@ export const spacesApi = {
 
   getSpace: async (spaceId: string): Promise<Space> => {
     return await api.get(`spaces/${spaceId}`).json()
+  },
+
+  createSpace: async (data: CreateSpaceRequest): Promise<Space> => {
+    return await api.post("spaces", { json: data }).json()
   },
 }
