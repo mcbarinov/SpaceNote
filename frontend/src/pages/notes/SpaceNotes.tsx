@@ -1,10 +1,11 @@
-import { useParams, useSearchParams } from "react-router"
+import { useParams, useSearchParams, Link } from "react-router"
 import { useEffect, useState } from "react"
 import { notesApi, type Filter, type PaginationResult } from "../../lib/api"
 import { NotesTable } from "./components/NotesTable"
 import { FilterDropdown } from "./components/FilterDropdown"
 import { PaginationControls } from "./components/PaginationControls"
 import { useSpacesStore } from "@/stores/spacesStore"
+import { Button } from "@/components/ui/button"
 
 export default function SpaceNotes() {
   const { spaceId } = useParams<{ spaceId: string }>()
@@ -81,7 +82,12 @@ export default function SpaceNotes() {
     <div>
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Notes / {space.name}</h1>
-        <FilterDropdown filters={space.filters} selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} />
+        <div className="flex items-center gap-3">
+          <Button asChild>
+            <Link to={`/notes/${spaceId}/new`}>New Note</Link>
+          </Button>
+          <FilterDropdown filters={space.filters} selectedFilter={selectedFilter} onFilterSelect={handleFilterSelect} />
+        </div>
       </div>
 
       <div className="text-sm text-gray-600 mb-4">

@@ -3,6 +3,7 @@ import Layout from "./components/layout/Layout"
 import LoginPage from "./pages/login"
 import IndexPage from "./pages/IndexPage"
 import SpaceNotes from "./pages/notes/SpaceNotes"
+import CreateNote from "./pages/notes/CreateNote"
 import NoteDetail from "./pages/notes/NoteDetail"
 import SpacesPage from "./pages/spaces"
 import SpaceFields from "./pages/spaces/SpaceFields"
@@ -33,6 +34,10 @@ export const router = createBrowserRouter([
       {
         path: "notes/:spaceId",
         Component: SpaceNotes,
+      },
+      {
+        path: "notes/:spaceId/new",
+        Component: CreateNote,
       },
       {
         path: "notes/:spaceId/:noteId",
