@@ -11,6 +11,7 @@ import {
   BreadcrumbSeparator,
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb"
+import { Comments } from "./components/Comments"
 
 export default function NoteDetail() {
   const { spaceId, noteId } = useParams<{ spaceId: string; noteId: string }>()
@@ -110,6 +111,10 @@ export default function NoteDetail() {
             )
           })}
         </div>
+      </div>
+
+      <div className="mt-8 bg-white border border-gray-300 rounded-lg p-6">
+        <Comments spaceId={spaceId!} noteId={Number(noteId)} />
       </div>
     </div>
   )

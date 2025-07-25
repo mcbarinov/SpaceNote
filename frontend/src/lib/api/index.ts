@@ -48,6 +48,7 @@ export const api = ky.create({
 
 // Re-export all APIs
 export * from "./auth"
+export * from "./comments"
 export * from "./notes"
 export * from "./spaces"
 export * from "./users"
