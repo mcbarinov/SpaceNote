@@ -7,6 +7,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.comment.models import Comment
 from spacenote.core.core import Service
+from spacenote.core.errors import ValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -31,7 +32,7 @@ class CommentService(Service):
         """Create a new comment for a note."""
         # Get the next auto-increment ID for this space
         if not content.strip():
-            raise ValueError("Comment content cannot be empty")
+            raise ValidationError("Comment content cannot be empty")
 
         last_comment = await self._collections[space_id].find({}).sort("_id", -1).limit(1).to_list(1)
         next_id = 1 if not last_comment else last_comment[0]["_id"] + 1
@@ -58,7 +59,7 @@ class CommentService(Service):
     async def drop_collection(self, space_id: str) -> None:
         """Drop the entire collection for a space."""
         if space_id not in self._collections:
-            raise ValueError(f"Collection for space '{space_id}' does not exist")
+            raise ValidationError(f"Collection for space '{space_id}' does not exist")
 
         await self._collections[space_id].drop()
         del self._collections[space_id]
@@ -94,5 +95,5 @@ class CommentService(Service):
     async def count_comments(self, space_id: str) -> int:
         """Count the number of comments in a space."""
         if space_id not in self._collections:
-            raise ValueError(f"Collection for space '{space_id}' does not exist")
+            raise ValidationError(f"Collection for space '{space_id}' does not exist")
         return await self._collections[space_id].count_documents({})

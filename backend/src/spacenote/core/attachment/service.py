@@ -16,7 +16,7 @@ from spacenote.core.attachment.models import (
 )
 from spacenote.core.attachment.preview import generate_preview, get_preview_path, is_image
 from spacenote.core.core import Service
-from spacenote.core.errors import NotFoundError
+from spacenote.core.errors import NotFoundError, ValidationError
 
 logger = structlog.get_logger(__name__)
 
@@ -128,7 +128,7 @@ class AttachmentService(Service):
         # Get the attachment
         attachment = await self.get_attachment(space_id, attachment_id)
         if attachment.note_id is not None:
-            raise ValueError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
+            raise ValidationError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
 
         # Get old path before updating the record
         attachments_root = Path(self.core.config.attachments_path)
@@ -178,7 +178,7 @@ class AttachmentService(Service):
         # Get the attachment
         attachment = await self.get_attachment(space_id, attachment_id)
         if attachment.note_id is None:
-            raise ValueError(f"Attachment {attachment_id} is not assigned to any note")
+            raise ValidationError(f"Attachment {attachment_id} is not assigned to any note")
 
         old_note_id = attachment.note_id
 
@@ -289,7 +289,7 @@ class AttachmentService(Service):
     async def drop_collection(self, space_id: str) -> None:
         """Drop the entire collection for a space and cleanup files."""
         if space_id not in self._collections:
-            raise ValueError(f"Collection for space '{space_id}' does not exist")
+            raise ValidationError(f"Collection for space '{space_id}' does not exist")
 
         # Delete all files
         attachments_root = Path(self.core.config.attachments_path)

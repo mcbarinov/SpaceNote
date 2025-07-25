@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     pass
 
+from spacenote.core.errors import ValidationError
 from spacenote.core.field.models import FieldOption, FieldType, FieldValueType, SpaceField
 from spacenote.core.space.models import Space
 from spacenote.core.special.models import SpecialValue
@@ -48,7 +49,7 @@ def register_validator(field_type: FieldType) -> Callable[[type[FieldValidator]]
 def get_validator(field_type: FieldType) -> FieldValidator:
     """Get the validator for a specific field type."""
     if field_type not in VALIDATORS:
-        raise ValueError(f"No validator registered for field type: {field_type}")
+        raise ValidationError(f"No validator registered for field type: {field_type}")
     return VALIDATORS[field_type]
 
 
@@ -67,7 +68,7 @@ class StringValidator(FieldValidator):
     def validate_configuration(self, field: SpaceField) -> None:
         # String fields don't have special configuration requirements
         if field.default is not None and not isinstance(field.default, str):
-            raise ValueError("STRING field default must be a string")
+            raise ValidationError("STRING field default must be a string")
 
     def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
@@ -80,7 +81,7 @@ class MarkdownValidator(FieldValidator):
     def validate_configuration(self, field: SpaceField) -> None:
         # Markdown fields don't have special configuration requirements
         if field.default is not None and not isinstance(field.default, str):
-            raise ValueError("MARKDOWN field default must be a string")
+            raise ValidationError("MARKDOWN field default must be a string")
 
     def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
@@ -92,7 +93,7 @@ class BooleanValidator(FieldValidator):
 
     def validate_configuration(self, field: SpaceField) -> None:
         if field.default is not None and not isinstance(field.default, bool):
-            raise ValueError("BOOLEAN field default must be a boolean value")
+            raise ValidationError("BOOLEAN field default must be a boolean value")
 
     def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         # HTML forms should send "true" or "false" explicitly
@@ -100,7 +101,7 @@ class BooleanValidator(FieldValidator):
             return True
         if raw_value == "false":
             return False
-        raise ValueError(f"Invalid boolean value '{raw_value}'. Expected 'true' or 'false'")
+        raise ValidationError(f"Invalid boolean value '{raw_value}'. Expected 'true' or 'false'")
 
 
 @register_validator(FieldType.CHOICE)
@@ -110,20 +111,20 @@ class ChoiceValidator(FieldValidator):
     def validate_configuration(self, field: SpaceField) -> None:
         values = field.options.get(FieldOption.VALUES, [])
         if not values or not isinstance(values, list):
-            raise ValueError("CHOICE field must have at least one value option")
+            raise ValidationError("CHOICE field must have at least one value option")
 
         # Check for duplicates while preserving order
         if len(set(values)) != len(values):
-            raise ValueError("Duplicate value in CHOICE field options")
+            raise ValidationError("Duplicate value in CHOICE field options")
 
         # Check that values don't contain only whitespace
         for value in values:
             if not value.strip():
-                raise ValueError("CHOICE field values cannot be empty or contain only whitespace")
+                raise ValidationError("CHOICE field values cannot be empty or contain only whitespace")
 
         # Check that default is among available values
         if field.default and field.default not in values:
-            raise ValueError(f"Default value '{field.default}' must be one of the available choices")
+            raise ValidationError(f"Default value '{field.default}' must be one of the available choices")
 
     def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -132,7 +133,7 @@ class ChoiceValidator(FieldValidator):
         # Validate that the choice is in available options
         available_choices = field.options.get(FieldOption.VALUES, [])
         if isinstance(available_choices, list) and raw_value not in available_choices:
-            raise ValueError(f"Invalid choice '{raw_value}' for field '{field.name}'")
+            raise ValidationError(f"Invalid choice '{raw_value}' for field '{field.name}'")
         return raw_value
 
 
@@ -142,7 +143,7 @@ class TagsValidator(FieldValidator):
 
     def validate_configuration(self, field: SpaceField) -> None:
         if field.default is not None and not isinstance(field.default, list):
-            raise ValueError("TAGS field default must be a list of strings")
+            raise ValidationError("TAGS field default must be a list of strings")
 
     def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -159,7 +160,7 @@ class UserValidator(FieldValidator):
 
     def validate_configuration(self, field: SpaceField) -> None:
         if field.default is not None and field.default not in [SpecialValue.CURRENT_USER] and not isinstance(field.default, str):
-            raise ValueError("USER field default must be a string (user ID) or @me")
+            raise ValidationError("USER field default must be a string (user ID) or @me")
 
     def validate_value(self, _field: SpaceField, raw_value: str, context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -167,12 +168,12 @@ class UserValidator(FieldValidator):
 
         # Check that context with members is provided
         if not context or "members" not in context:
-            raise ValueError("UserValidator requires 'members' in context")
+            raise ValidationError("UserValidator requires 'members' in context")
 
         # Validate that the user is a member of the space
         members = context["members"]
         if raw_value not in members:
-            raise ValueError(f"User '{raw_value}' is not a member of this space")
+            raise ValidationError(f"User '{raw_value}' is not a member of this space")
         return raw_value
 
 
@@ -182,7 +183,7 @@ class DateTimeValidator(FieldValidator):
 
     def validate_configuration(self, field: SpaceField) -> None:
         if field.default is not None and not isinstance(field.default, str):
-            raise ValueError("DATETIME field default must be a string")
+            raise ValidationError("DATETIME field default must be a string")
 
     def validate_value(self, _field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         return raw_value.strip() if raw_value else None
@@ -199,9 +200,9 @@ class IntValidator(FieldValidator):
                 try:
                     field.default = int(field.default)
                 except ValueError:
-                    raise ValueError(f"INT field default '{field.default}' must be a valid integer") from None
+                    raise ValidationError(f"INT field default '{field.default}' must be a valid integer") from None
             elif not isinstance(field.default, int):
-                raise ValueError("INT field default must be an integer")
+                raise ValidationError("INT field default must be an integer")
 
         # Validate min/max constraints
         min_val = field.options.get(FieldOption.MIN)
@@ -214,7 +215,7 @@ class IntValidator(FieldValidator):
             and isinstance(max_val, int)
             and min_val > max_val
         ):
-            raise ValueError("INT field min value cannot be greater than max value")
+            raise ValidationError("INT field min value cannot be greater than max value")
 
     def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -223,16 +224,16 @@ class IntValidator(FieldValidator):
         try:
             value = int(raw_value)
         except ValueError:
-            raise ValueError(f"Invalid integer value '{raw_value}' for field '{field.name}'") from None
+            raise ValidationError(f"Invalid integer value '{raw_value}' for field '{field.name}'") from None
 
         # Check min/max constraints
         min_val = field.options.get(FieldOption.MIN)
         max_val = field.options.get(FieldOption.MAX)
 
         if min_val is not None and isinstance(min_val, int) and value < min_val:
-            raise ValueError(f"Value {value} is below minimum {min_val} for field '{field.name}'")
+            raise ValidationError(f"Value {value} is below minimum {min_val} for field '{field.name}'")
         if max_val is not None and isinstance(max_val, int) and value > max_val:
-            raise ValueError(f"Value {value} is above maximum {max_val} for field '{field.name}'")
+            raise ValidationError(f"Value {value} is above maximum {max_val} for field '{field.name}'")
 
         return value
 
@@ -248,9 +249,9 @@ class FloatValidator(FieldValidator):
                 try:
                     field.default = float(field.default)
                 except ValueError:
-                    raise ValueError(f"FLOAT field default '{field.default}' must be a valid number") from None
+                    raise ValidationError(f"FLOAT field default '{field.default}' must be a valid number") from None
             elif not isinstance(field.default, (int, float)):
-                raise ValueError("FLOAT field default must be a number")
+                raise ValidationError("FLOAT field default must be a number")
 
         # Validate min/max constraints
         min_val = field.options.get(FieldOption.MIN)
@@ -263,7 +264,7 @@ class FloatValidator(FieldValidator):
             and isinstance(max_val, (int, float))
             and min_val > max_val
         ):
-            raise ValueError("FLOAT field min value cannot be greater than max value")
+            raise ValidationError("FLOAT field min value cannot be greater than max value")
 
     def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -272,16 +273,16 @@ class FloatValidator(FieldValidator):
         try:
             value = float(raw_value)
         except ValueError:
-            raise ValueError(f"Invalid float value '{raw_value}' for field '{field.name}'") from None
+            raise ValidationError(f"Invalid float value '{raw_value}' for field '{field.name}'") from None
 
         # Check min/max constraints
         min_val = field.options.get(FieldOption.MIN)
         max_val = field.options.get(FieldOption.MAX)
 
         if min_val is not None and isinstance(min_val, (int, float)) and value < min_val:
-            raise ValueError(f"Value {value} is below minimum {min_val} for field '{field.name}'")
+            raise ValidationError(f"Value {value} is below minimum {min_val} for field '{field.name}'")
         if max_val is not None and isinstance(max_val, (int, float)) and value > max_val:
-            raise ValueError(f"Value {value} is above maximum {max_val} for field '{field.name}'")
+            raise ValidationError(f"Value {value} is above maximum {max_val} for field '{field.name}'")
 
         return value
 
@@ -292,7 +293,7 @@ class ImageValidator(FieldValidator):
 
     def validate_configuration(self, field: SpaceField) -> None:
         if field.default is not None and field.default not in [SpecialValue.LAST] and not isinstance(field.default, int):
-            raise ValueError("IMAGE field default must be an integer (attachment_id) or @last")
+            raise ValidationError("IMAGE field default must be an integer (attachment_id) or @last")
 
     def validate_value(self, field: SpaceField, raw_value: str, _context: dict[str, Any] | None = None) -> FieldValueType:
         if not raw_value:
@@ -301,7 +302,7 @@ class ImageValidator(FieldValidator):
         try:
             attachment_id = int(raw_value)
         except ValueError:
-            raise ValueError(f"Invalid attachment ID '{raw_value}' for field '{field.name}'") from None
+            raise ValidationError(f"Invalid attachment ID '{raw_value}' for field '{field.name}'") from None
 
         return attachment_id
 
@@ -324,12 +325,12 @@ def is_valid_field_name(s: str) -> bool:
 def validate_new_field(space: Space, new_field: SpaceField) -> SpaceField:
     """Validate a new field being added to a space."""
     if not is_valid_field_name(new_field.name):
-        raise ValueError(f"Invalid field name '{new_field.name}'. Must be lowercase, no spaces, and start with a letter.")
+        raise ValidationError(f"Invalid field name '{new_field.name}'. Must be lowercase, no spaces, and start with a letter.")
 
     # Check for duplicate field names
     existing_names = {f.name for f in space.fields}
     if new_field.name in existing_names:
-        raise ValueError(f"Field name '{new_field.name}' already exists in space '{space.id}'")
+        raise ValidationError(f"Field name '{new_field.name}' already exists in space '{space.id}'")
 
     # Validate field configuration (options and default values)
     validate_field_configuration(new_field)
@@ -373,12 +374,12 @@ async def validate_note_fields(
                 if field.default is not None:
                     validated_fields[field_name] = field.default
                 elif field.required:
-                    raise ValueError(f"Field '{field_name}' is required but has no default value")
+                    raise ValidationError(f"Field '{field_name}' is required but has no default value")
                 else:
                     # Optional field without default - store as None
                     validated_fields[field_name] = None
                 continue
-            raise ValueError(f"Missing field '{field_name}' in form data")
+            raise ValidationError(f"Missing field '{field_name}' in form data")
 
         raw_value = field_values[field_name]
 
@@ -388,7 +389,7 @@ async def validate_note_fields(
 
         # Handle required fields AFTER validation
         if field.required and validated_value is None:
-            raise ValueError(f"Field '{field_name}' is required")
+            raise ValidationError(f"Field '{field_name}' is required")
 
         # Always include the field, even if it's None
         validated_fields[field_name] = validated_value

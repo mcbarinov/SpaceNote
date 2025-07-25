@@ -7,6 +7,7 @@ if TYPE_CHECKING:
 
 from spacenote.core.attachment.models import AttachmentCategory
 from spacenote.core.core import Service
+from spacenote.core.errors import ValidationError
 from spacenote.core.field.models import FieldType, FieldValueType
 from spacenote.core.special.models import SpecialValue
 
@@ -45,7 +46,7 @@ class SpecialService(Service):
     async def _resolve_current_user(self, field: "SpaceField", space: "Space", current_user: "User | None") -> FieldValueType:
         """Resolve @me special value."""
         if field.type != FieldType.USER:
-            raise ValueError("Special value @me is only valid for USER fields")
+            raise ValidationError("Special value @me is only valid for USER fields")
 
         if not current_user:
             return None
@@ -59,7 +60,7 @@ class SpecialService(Service):
     async def _resolve_last(self, field: "SpaceField", space: "Space") -> FieldValueType:
         """Resolve @last special value."""
         if field.type != FieldType.IMAGE:
-            raise ValueError("Special value @last is only valid for IMAGE fields")
+            raise ValidationError("Special value @last is only valid for IMAGE fields")
 
         # Get the last unassigned image attachment
         unassigned_attachments = await self.core.services.attachment.get_space_attachments(space.id, unassigned_only=True)

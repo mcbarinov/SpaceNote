@@ -7,6 +7,8 @@ These functions have no external dependencies and are easily testable.
 
 import bcrypt
 
+from spacenote.core.errors import ValidationError
+
 
 def hash_password(password: str) -> str:
     """
@@ -43,7 +45,7 @@ def validate_password_strength(password: str) -> None:
         password: Password to validate
 
     Raises:
-        ValueError: If password doesn't meet requirements
+        ValidationError: If password doesn't meet requirements
     """
     if len(password) < 4:
-        raise ValueError("Password must be at least 4 characters long")
+        raise ValidationError("Password must be at least 4 characters long")

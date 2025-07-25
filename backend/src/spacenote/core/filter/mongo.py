@@ -1,5 +1,6 @@
 from typing import Any
 
+from spacenote.core.errors import ValidationError
 from spacenote.core.field.models import FieldValueType
 from spacenote.core.filter.models import Filter, FilterCondition, FilterOperator
 from spacenote.core.space.models import Space
@@ -69,7 +70,7 @@ def _build_field_query(condition: FilterCondition) -> Any:  # noqa: ANN401
                 return {"$all": value}
             return {"$all": [value]}
         case _:
-            raise ValueError(f"Unsupported operator: {operator}")
+            raise ValidationError(f"Unsupported operator: {operator}")
 
 
 def build_sort_spec(filter: Filter) -> list[tuple[str, int]]:

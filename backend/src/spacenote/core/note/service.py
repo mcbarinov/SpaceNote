@@ -10,6 +10,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.attachment.models import ATTACHMENT_CATEGORIES, AttachmentCategory
 from spacenote.core.core import Service
+from spacenote.core.errors import NotFoundError, ValidationError
 from spacenote.core.field.models import FieldType, FieldValueType
 from spacenote.core.field.validators import validate_note_fields
 from spacenote.core.filter.mongo import build_mongodb_query, build_sort_spec
@@ -61,13 +62,13 @@ class NoteService(Service):
         try:
             attachment = await self.core.services.attachment.get_attachment(space_id, attachment_id)
         except ValueError as e:
-            raise ValueError(f"Attachment {attachment_id} not found in space {space_id}") from e
+            raise ValidationError(f"Attachment {attachment_id} not found in space {space_id}") from e
 
         if attachment.note_id is not None:
-            raise ValueError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
+            raise ValidationError(f"Attachment {attachment_id} is already assigned to note {attachment.note_id}")
 
         if attachment.content_type not in ATTACHMENT_CATEGORIES[AttachmentCategory.IMAGES]:
-            raise ValueError(f"Attachment {attachment_id} is not an image (content type: {attachment.content_type})")
+            raise ValidationError(f"Attachment {attachment_id} is not an image (content type: {attachment.content_type})")
 
     async def list_notes(
         self, space_id: str, filter_id: str | None = None, current_user: User | None = None, page: int = 1, page_size: int = 20
@@ -80,7 +81,7 @@ class NoteService(Service):
             space = self.core.services.space.get_space(space_id)
             filter = space.get_filter(filter_id)
             if not filter:
-                raise ValueError(f"Filter '{filter_id}' not found in space")
+                raise ValidationError(f"Filter '{filter_id}' not found in space")
 
             query = build_mongodb_query(filter, space, current_user)
             sort_spec = build_sort_spec(filter)
@@ -152,9 +153,9 @@ class NoteService(Service):
     async def get_note(self, space_id: str, note_id: int) -> Note:
         """Get a single note by ID from a space."""
         res = await self._collections[space_id].find_one({"_id": note_id})
-        if res:
-            return Note.model_validate(res)
-        raise ValueError(f"Note with ID {note_id} not found in space {space_id}")
+        if res is None:
+            raise NotFoundError(f"Note with ID {note_id} not found in space {space_id}")
+        return Note.model_validate(res)
 
     async def update_comment_stats(self, space_id: str, note_id: int, last_comment_date: datetime) -> None:
         """Update comment statistics for a note after a new comment is added."""
@@ -210,7 +211,7 @@ class NoteService(Service):
     async def drop_collection(self, space_id: str) -> None:
         """Drop the entire collection for a space."""
         if space_id not in self._collections:
-            raise ValueError(f"Collection for space '{space_id}' does not exist")
+            raise ValidationError(f"Collection for space '{space_id}' does not exist")
         await self._collections[space_id].drop()
         del self._collections[space_id]
 
@@ -247,7 +248,7 @@ class NoteService(Service):
     async def count_notes(self, space_id: str) -> int:
         """Count the number of notes in a space."""
         if space_id not in self._collections:
-            raise ValueError(f"Collection for space '{space_id}' does not exist")
+            raise ValidationError(f"Collection for space '{space_id}' does not exist")
         return await self._collections[space_id].count_documents({})
 
     async def _assign_image_attachments(self, space: "Space", note_id: int, resolved_fields: dict[str, FieldValueType]) -> None:

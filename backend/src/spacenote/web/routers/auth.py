@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 
 from spacenote.core.app import App
@@ -39,7 +39,7 @@ class AuthApi:
 
         session_id = await self.app.login(login_data.username, login_data.password, user_agent, ip_address)
         if not session_id:
-            raise HTTPException(status_code=401, detail="Invalid username or password")
+            raise ValueError("Invalid username or password")
 
         return LoginResponse(session_id=session_id, user_id=login_data.username)
 
@@ -47,15 +47,7 @@ class AuthApi:
     async def change_password(self, data: ChangePasswordRequest) -> dict[str, str]:
         """Change password for current user."""
         if not self.session_id:
-            raise HTTPException(status_code=401, detail="Not authenticated")
+            raise ValueError("Not authenticated")
 
-        try:
-            await self.app.change_password(self.session_id, data.current_password, data.new_password)
-        except ValueError as e:
-            # Check if it's specifically about incorrect password
-            error_msg = str(e)
-            if "incorrect" in error_msg.lower() or "invalid" in error_msg.lower():
-                raise HTTPException(status_code=401, detail="Current password is incorrect") from e
-            raise HTTPException(status_code=400, detail=error_msg) from e
-        else:
-            return {"message": "Password changed successfully"}
+        await self.app.change_password(self.session_id, data.current_password, data.new_password)
+        return {"message": "Password changed successfully"}

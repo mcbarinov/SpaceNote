@@ -4,6 +4,7 @@ from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.comment.models import Comment
 from spacenote.core.core import Service
+from spacenote.core.errors import ValidationError
 from spacenote.core.export.models import ExportData, ImportResult
 from spacenote.core.export.validators import validate_import_data
 from spacenote.core.note.models import Note
@@ -45,7 +46,7 @@ class ExportService(Service):
         """Import space with optional notes and comments."""
         validation_errors = await validate_import_data(data, self.core.services.space)
         if validation_errors:
-            raise ValueError(f"Import validation failed: {'; '.join(validation_errors)}")
+            raise ValidationError(f"Import validation failed: {'; '.join(validation_errors)}")
 
         export_data = ExportData(**data)
         warnings: list[str] = []

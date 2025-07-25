@@ -10,7 +10,7 @@ from spacenote.core.attachment.preview import get_preview_path
 from spacenote.core.comment.models import Comment
 from spacenote.core.config import CoreConfig
 from spacenote.core.core import Core
-from spacenote.core.errors import AccessDeniedError
+from spacenote.core.errors import AccessDeniedError, ValidationError
 from spacenote.core.export.models import ImportResult
 from spacenote.core.field.models import SpaceField
 from spacenote.core.filter.models import Filter
@@ -123,7 +123,7 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.create_note_from_raw_fields(space_id, current_user.id, raw_fields)
 
-    async def get_note(self, session_id: SessionId, space_id: str, note_id: int) -> Note | None:
+    async def get_note(self, session_id: SessionId, space_id: str, note_id: int) -> Note:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         return await self._core.services.note.get_note(space_id, note_id)
@@ -132,7 +132,7 @@ class App:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
         self._core.services.access.ensure_admin(current_user.id)
         if not self._core.services.space.space_exists(space_id):
-            raise ValueError(f"Space '{space_id}' does not exist.")
+            raise ValidationError(f"Space '{space_id}' does not exist.")
         return await self._core.services.export.export_space(space_id, include_content)
 
     async def import_space_from_json(self, session_id: SessionId, data: dict[str, Any]) -> ImportResult:
@@ -163,7 +163,7 @@ class App:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
         self._core.services.access.ensure_admin(current_user.id)
         if not self._core.services.space.space_exists(space_id):
-            raise ValueError(f"Space '{space_id}' does not exist.")
+            raise ValidationError(f"Space '{space_id}' does not exist.")
         await self._core.services.space.delete_space(space_id)
         await self._core.services.note.drop_collection(space_id)
         await self._core.services.comment.drop_collection(space_id)

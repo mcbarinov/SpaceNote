@@ -8,7 +8,7 @@ from jinja2 import BaseLoader, Environment
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
-from spacenote.core.errors import NotFoundError
+from spacenote.core.errors import NotFoundError, ValidationError
 from spacenote.core.telegram.models import TelegramBot
 
 logger = structlog.get_logger(__name__)
@@ -30,7 +30,7 @@ class TelegramService(Service):
 
         if await self.bot_exists(id):
             log.warning("bot_already_exists")
-            raise ValueError(f"Bot with ID '{id}' already exists")
+            raise ValidationError(f"Bot with ID '{id}' already exists")
 
         bot = TelegramBot(
             id=id,

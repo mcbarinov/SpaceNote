@@ -1,5 +1,5 @@
 from spacenote.core.core import Service
-from spacenote.core.errors import AccessDeniedError, AdminRequiredError, AuthenticationError
+from spacenote.core.errors import AccessDeniedError, AuthenticationError
 from spacenote.core.user.models import SessionId, User
 
 
@@ -17,6 +17,6 @@ class AccessService(Service):
             raise AccessDeniedError(f"Access denied: user '{member}' is not a member of space '{space_id}'")
 
     def ensure_admin(self, user_id: str) -> None:
-        """Ensure the user is admin, raise AdminRequiredError if not."""
+        """Ensure the user is admin, raise AccessDeniedError if not."""
         if user_id != "admin":
-            raise AdminRequiredError
+            raise AccessDeniedError("Admin privileges required")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from spacenote.core.app import App
@@ -25,25 +25,16 @@ class UsersApi:
     async def get_users(self) -> list[dict[str, str]]:
         """Get all users (admin only)."""
         if not self.session_id:
-            raise HTTPException(status_code=401, detail="Not authenticated")
+            raise ValueError("Not authenticated")
 
-        try:
-            users = await self.app.get_users(self.session_id)
-            return [{"id": user.id} for user in users]
-        except PermissionError as e:
-            raise HTTPException(status_code=403, detail="Admin access required") from e
+        users = await self.app.get_users(self.session_id)
+        return [{"id": user.id} for user in users]
 
     @router.post("/users")
     async def create_user(self, user_data: CreateUserRequest) -> dict[str, str]:
         """Create a new user (admin only)."""
         if not self.session_id:
-            raise HTTPException(status_code=401, detail="Not authenticated")
+            raise ValueError("Not authenticated")
 
-        try:
-            user = await self.app.create_user(self.session_id, user_data.username, user_data.password)
-        except PermissionError as e:
-            raise HTTPException(status_code=403, detail="Admin access required") from e
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e)) from e
-        else:
-            return {"id": user.id}
+        user = await self.app.create_user(self.session_id, user_data.username, user_data.password)
+        return {"id": user.id}

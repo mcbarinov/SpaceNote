@@ -4,7 +4,7 @@ import structlog
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
-from spacenote.core.errors import NotFoundError
+from spacenote.core.errors import NotFoundError, ValidationError
 from spacenote.core.user.models import User
 from spacenote.core.user.password import hash_password, validate_password_strength, verify_password
 
@@ -39,7 +39,7 @@ class UserService(Service):
 
         if self.user_exists(id):
             log.warning("user_already_exists")
-            raise ValueError(f"User with ID '{id}' already exists")
+            raise ValidationError(f"User with ID '{id}' already exists")
 
         user_data = {"_id": id, "password_hash": hash_password(password)}
         await self._collection.insert_one(User.model_validate(user_data).to_dict())
@@ -54,7 +54,7 @@ class UserService(Service):
         user = self.get_user(user_id)
 
         if not verify_password(old_password, user.password_hash):
-            raise ValueError("Current password is incorrect")
+            raise ValidationError("Current password is incorrect")
 
         updated = {"password_hash": hash_password(new_password)}
         await self._collection.update_one({"_id": user_id}, {"$set": updated})

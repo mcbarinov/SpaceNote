@@ -278,19 +278,121 @@ Benefits:
 
 ## Error Handling
 
+SpaceNote uses a centralized error handling system that distinguishes between user-facing and internal errors.
+
+### Error Hierarchy
+
+All user-facing errors inherit from the abstract `UserError` base class:
+
+```python
+from abc import ABC
+
+class UserError(ABC, Exception):
+    """Base class for user-related errors.
+    
+    All errors that inherit from UserError will have their messages 
+    displayed to the user. These errors should not contain any 
+    sensitive information.
+    """
+
+class ValidationError(UserError):
+    """Raised when user input fails validation."""
+
+class AuthenticationError(UserError):
+    """Raised when authentication fails."""
+
+class AccessDeniedError(UserError):
+    """Raised when access is denied."""
+
+class NotFoundError(UserError):
+    """Raised when a requested resource is not found."""
+```
+
 ### Service Layer
 
-Services raise specific exceptions:
-- `ValueError`: Invalid input or state
-- `PermissionError`: Access denied
-- `KeyError`: Entity not found
+Services raise specific exceptions based on the error type:
 
-### Web Layer
+**User Errors (inherit from UserError):**
+- `ValidationError`: Invalid user input or data validation failures
+- `AuthenticationError`: Login failures, invalid sessions
+- `AccessDeniedError`: Permission denied, admin privileges required
+- `NotFoundError`: Requested resource doesn't exist
 
-FastAPI handles exceptions automatically:
-- Returns appropriate HTTP status codes
-- Provides consistent error responses
-- Logs errors for debugging
+**Internal Errors (standard Python exceptions):**
+- `ValueError`: Programming errors, internal validation
+- `KeyError`: Missing keys in data structures
+- `Exception`: Unexpected system errors
+
+### Web Layer Error Handling
+
+The web layer uses a centralized error handler that automatically maps error types to HTTP status codes:
+
+```python
+# Single handler for all UserError subclasses
+app.add_exception_handler(UserError, user_error_handler)
+app.add_exception_handler(Exception, general_exception_handler)
+```
+
+**Status Code Mapping:**
+- `AuthenticationError` → 401 Unauthorized
+- `AccessDeniedError` → 403 Forbidden  
+- `NotFoundError` → 404 Not Found
+- `ValidationError` → 400 Bad Request
+- `Exception` (non-UserError) → 500 Internal Server Error
+
+**Error Response Format:**
+```json
+{
+  "error": "Error Type",
+  "detail": "Human-readable error message",
+  "status_code": 400
+}
+```
+
+### Router Implementation
+
+Routers are kept minimal and let errors bubble up to the centralized handlers:
+
+```python
+# ✅ CORRECT - Simple, clean router
+@router.post("/spaces")
+async def create_space(self, request: CreateSpaceRequest) -> Space:
+    return await self.app.create_space(self.session_id, request.id, request.name)
+
+# ❌ AVOID - Verbose try/catch blocks
+@router.post("/spaces")
+async def create_space(self, request: CreateSpaceRequest) -> Space:
+    try:
+        return await self.app.create_space(self.session_id, request.id, request.name)
+    except ValidationError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except AccessDeniedError as e:
+        raise HTTPException(status_code=403, detail=str(e)) from e
+```
+
+**Router Guidelines:**
+- No try/catch blocks in router methods
+- No manual HTTPException creation
+- Let the centralized error handler manage all error responses
+- Focus on business logic, not error handling
+
+### Benefits
+
+**For Frontend Developers:**
+- Consistent API error responses
+- Clear error messages for user-facing issues
+- Predictable status codes
+
+**For Backend Developers:**
+- Simple router implementations
+- Easy to add new error types
+- Centralized error handling logic
+- Internal errors are automatically hidden from users
+
+**Security:**
+- User errors show helpful messages
+- Internal errors hide sensitive system information
+- Automatic logging of unexpected errors
 
 ## Development Workflow
 

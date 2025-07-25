@@ -4,7 +4,7 @@ import structlog
 from pymongo.asynchronous.database import AsyncDatabase
 
 from spacenote.core.core import Service
-from spacenote.core.errors import NotFoundError
+from spacenote.core.errors import NotFoundError, ValidationError
 from spacenote.core.field.models import SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.filter.models import Filter
@@ -53,10 +53,10 @@ class SpaceService(Service):
 
         if not space_id or not space_id.replace("-", "").replace("_", "").isalnum():
             log.warning("invalid_space_id")
-            raise ValueError("Space ID must be a valid slug (alphanumeric with hyphens/underscores)")
+            raise ValidationError("Space ID must be a valid slug (alphanumeric with hyphens/underscores)")
         if self.space_exists(space_id):
             log.warning("space_already_exists")
-            raise ValueError(f"Space with ID '{space_id}' already exists")
+            raise ValidationError(f"Space with ID '{space_id}' already exists")
 
         await self._collection.insert_one(Space(id=space_id, name=name, members=[member]).to_dict())
         await self.update_cache(space_id)
@@ -73,7 +73,7 @@ class SpaceService(Service):
             raise NotFoundError(f"Space '{space_id}' not found")
         for member in members:
             if not self.core.services.user.user_exists(member):
-                raise ValueError(f"User '{member}' does not exist")
+                raise ValidationError(f"User '{member}' does not exist")
 
         await self._collection.update_one({"_id": space_id}, {"$set": {"members": members}})
         await self.update_cache(space_id)
@@ -99,7 +99,7 @@ class SpaceService(Service):
         existing_field_names = {field.name for field in space.fields}
         for field_name in field_names:
             if field_name not in existing_field_names and field_name not in system_fields:
-                raise ValueError(f"Field '{field_name}' does not exist in space")
+                raise ValidationError(f"Field '{field_name}' does not exist in space")
 
         await self._collection.update_one({"_id": space_id}, {"$set": {"list_fields": field_names}})
         await self.update_cache(space_id)
@@ -113,11 +113,13 @@ class SpaceService(Service):
         for field_name in field_names:
             field = space.get_field(field_name)
             if not field:
-                raise ValueError(f"Field '{field_name}' does not exist in space")
+                raise ValidationError(f"Field '{field_name}' does not exist in space")
 
             # Check if field can be hidden (must have default if required)
             if field.required and field.default is None:
-                raise ValueError(f"Field '{field_name}' is required but has no default value. Cannot hide it in create form.")
+                raise ValidationError(
+                    f"Field '{field_name}' is required but has no default value. Cannot hide it in create form."
+                )
 
         await self._collection.update_one({"_id": space_id}, {"$set": {"hidden_create_fields": field_names}})
         await self.update_cache(space_id)
@@ -130,7 +132,7 @@ class SpaceService(Service):
         # Validate the filter
         errors = validate_filter(space, filter)
         if errors:
-            raise ValueError("; ".join(errors))
+            raise ValidationError("; ".join(errors))
 
         await self._collection.update_one({"_id": space_id}, {"$push": {"filters": filter.model_dump()}})
         await self.update_cache(space_id)

@@ -2,6 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Any
 
+from spacenote.core.errors import ValidationError
 from spacenote.core.field.models import FieldType, SpaceField
 from spacenote.core.field.validators import validate_new_field
 from spacenote.core.space.models import Space
@@ -56,7 +57,7 @@ def validate_json_import(json_content: str, existing_space_ids: list[str]) -> Im
     try:
         space_data = json.loads(json_content)
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON format: {e}") from e
+        raise ValidationError(f"Invalid JSON format: {e}") from e
 
     if not isinstance(space_data, dict):
         raise TypeError("JSON content must be a dictionary")
@@ -65,7 +66,7 @@ def validate_json_import(json_content: str, existing_space_ids: list[str]) -> Im
     if "version" in space_data:
         version = space_data["version"]
         if version != "1.0":
-            raise ValueError(f"Unsupported import format version: {version}")
+            raise ValidationError(f"Unsupported import format version: {version}")
 
     # Phase 3: Validate space data
     space_id, name = _validate_space_data(space_data, existing_space_ids)
@@ -94,7 +95,9 @@ def validate_json_import(json_content: str, existing_space_ids: list[str]) -> Im
                 hidden_field = f
                 break
         if hidden_field and hidden_field.required and hidden_field.default is None:
-            raise ValueError(f"Field '{hidden_field_name}' is required but has no default value. Cannot hide it in create form.")
+            raise ValidationError(
+                f"Field '{hidden_field_name}' is required but has no default value. Cannot hide it in create form."
+            )
 
     return ImportData(
         space_id=space_id,
@@ -109,24 +112,24 @@ def _validate_space_data(space_data: dict[str, Any], existing_space_ids: list[st
     """Validate basic space data and return space_id and name."""
     # Validate required space fields
     if "id" not in space_data:
-        raise ValueError("Missing required field: id")
+        raise ValidationError("Missing required field: id")
     if "name" not in space_data:
-        raise ValueError("Missing required field: name")
+        raise ValidationError("Missing required field: name")
 
     space_id = space_data["id"]
     name = space_data["name"]
 
     # Validate space ID format (same validation as create_space)
     if not space_id or not space_id.replace("-", "").replace("_", "").isalnum():
-        raise ValueError("Space ID must be a valid slug (alphanumeric with hyphens/underscores)")
+        raise ValidationError("Space ID must be a valid slug (alphanumeric with hyphens/underscores)")
 
     # Check if space already exists
     if space_id in existing_space_ids:
-        raise ValueError(f"Space with ID '{space_id}' already exists")
+        raise ValidationError(f"Space with ID '{space_id}' already exists")
 
     # Validate name is not empty
     if not name or not name.strip():
-        raise ValueError("Space name cannot be empty")
+        raise ValidationError("Space name cannot be empty")
 
     return space_id, name
 
@@ -146,21 +149,21 @@ def _validate_fields_data(space_data: dict[str, Any]) -> list[SpaceField]:
         if not isinstance(field_data, dict):
             raise TypeError(f"Field {i} must be a dictionary")
         if "name" not in field_data or "type" not in field_data:
-            raise ValueError(f"Field {i} must have 'name' and 'type'")
+            raise ValidationError(f"Field {i} must have 'name' and 'type'")
 
         field_name = field_data["name"]
         field_type_str = field_data["type"]
 
         # Check for duplicate field names
         if field_name in field_names_seen:
-            raise ValueError(f"Duplicate field name: '{field_name}'")
+            raise ValidationError(f"Duplicate field name: '{field_name}'")
         field_names_seen.add(field_name)
 
         # Validate field type
         try:
             field_type = FieldType(field_type_str)
         except ValueError as e:
-            raise ValueError(f"Invalid field type '{field_type_str}' for field '{field_name}'") from e
+            raise ValidationError(f"Invalid field type '{field_type_str}' for field '{field_name}'") from e
 
         # Create and validate SpaceField object
         try:
@@ -173,7 +176,7 @@ def _validate_fields_data(space_data: dict[str, Any]) -> list[SpaceField]:
             )
             validated_fields.append(field)
         except Exception as e:
-            raise ValueError(f"Invalid field '{field_name}': {e}") from e
+            raise ValidationError(f"Invalid field '{field_name}': {e}") from e
 
     return validated_fields
 
@@ -192,7 +195,7 @@ def _validate_list_fields_data(space_data: dict[str, Any], field_names: set[str]
         if not isinstance(list_field, str):
             raise TypeError(f"list_fields entry must be a string, got {type(list_field)}")
         if list_field not in field_names:
-            raise ValueError(f"list_fields references non-existent field: '{list_field}'")
+            raise ValidationError(f"list_fields references non-existent field: '{list_field}'")
 
     return list_fields
 
@@ -211,6 +214,6 @@ def _validate_hidden_create_fields_data(space_data: dict[str, Any], field_names:
         if not isinstance(hidden_field, str):
             raise TypeError(f"hidden_create_fields entry must be a string, got {type(hidden_field)}")
         if hidden_field not in field_names:
-            raise ValueError(f"hidden_create_fields references non-existent field: '{hidden_field}'")
+            raise ValidationError(f"hidden_create_fields references non-existent field: '{hidden_field}'")
 
     return hidden_create_fields

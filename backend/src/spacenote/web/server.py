@@ -7,16 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 from spacenote.core.app import App
-from spacenote.core.errors import AccessDeniedError, AdminRequiredError, AuthenticationError, NotFoundError
+from spacenote.core.errors import UserError
 from spacenote.web.config import WebConfig
-from spacenote.web.error_handlers import (
-    access_denied_handler,
-    admin_required_handler,
-    authentication_error_handler,
-    general_exception_handler,
-    not_found_handler,
-    value_error_handler,
-)
+from spacenote.web.error_handlers import general_exception_handler, user_error_handler
 from spacenote.web.routers import auth_router as new_auth_router
 from spacenote.web.routers import notes_router, spaces_router, users_router
 
@@ -57,11 +50,7 @@ def create_fastapi_app(app_instance: App, web_config: WebConfig) -> FastAPI:
     app.include_router(users_router, prefix="/api")
 
     # Register error handlers
-    app.add_exception_handler(AuthenticationError, authentication_error_handler)
-    app.add_exception_handler(AccessDeniedError, access_denied_handler)
-    app.add_exception_handler(AdminRequiredError, admin_required_handler)
-    app.add_exception_handler(NotFoundError, not_found_handler)
-    app.add_exception_handler(ValueError, value_error_handler)
+    app.add_exception_handler(UserError, user_error_handler)
     app.add_exception_handler(Exception, general_exception_handler)
 
     return app
