@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from "react-router"
-import type { Note } from "../lib/api/notes"
-import { formatFieldValue, formatDateOnly } from "../lib/formatters"
+import type { Note } from "@/lib/api/notes"
+import { formatFieldValue, formatDateOnly } from "@/lib/formatters"
 
 interface NotesTableProps {
   notes: Note[]

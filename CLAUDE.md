@@ -111,6 +111,43 @@ SpaceNote has a single React frontend that communicates with the backend via API
 
 When implementing new API endpoints, always create them in `web/routers/`.
 
+## Frontend Import Guidelines
+
+**MANDATORY: Use path aliases for all cross-directory imports.**
+
+SpaceNote has path aliases configured (`@/*` → `./src/*`). Always use them for clean, maintainable code.
+
+### Import Rules
+
+**✅ REQUIRED - Use Path Aliases:**
+```typescript
+import { Button } from "@/components/ui/button"
+import { useSpacesStore } from "@/stores/spacesStore"
+import type { Note } from "@/lib/api/notes"
+import { formatFieldValue } from "@/lib/formatters"
+```
+
+**✅ ALLOWED - Relative for Same Directory:**
+```typescript
+import { FieldsTable } from "./components/FieldsTable"
+import { utils } from "./helpers"
+```
+
+**❌ FORBIDDEN - Deep Relative Paths:**
+```typescript
+import { Button } from "../../../components/ui/button"      // Never do this
+import { formatters } from "../../../../lib/formatters"     // Never do this
+```
+
+### Why This Matters
+
+- **Maintainability**: Moving files won't break imports
+- **Readability**: `@/lib/api` is clearer than `../../../lib/api`
+- **IDE Support**: Better autocomplete and navigation
+- **Industry Standard**: Expected by all React/TypeScript developers
+
+**When creating new components, always use `@/` imports for anything outside the current directory.**
+
 
 ## Error Handling Guidelines
 

@@ -1,8 +1,8 @@
 import { useParams, Link } from "react-router"
 import { useEffect, useState } from "react"
 import { notesApi, type Filter, type PaginationResult } from "../../lib/api"
-import { NotesTable } from "../../components/NotesTable"
-import { FilterDropdown } from "../../components/FilterDropdown"
+import { NotesTable } from "./components/NotesTable"
+import { FilterDropdown } from "./components/FilterDropdown"
 import { Button } from "../../components/ui/button"
 import { useSpacesStore } from "@/stores/spacesStore"
 

@@ -1,6 +1,6 @@
-import type { Filter } from "../lib/api/notes"
-import { Button } from "./ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu"
+import type { Filter } from "@/lib/api/notes"
+import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface FilterDropdownProps {
   filters: Filter[]
