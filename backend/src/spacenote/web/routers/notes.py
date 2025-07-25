@@ -1,16 +1,11 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Query
-from pydantic import BaseModel
 
 from spacenote.core.note.models import Note, PaginationResult
 from spacenote.web.deps import AppDep, SessionIdDep
 
 router: APIRouter = APIRouter()
-
-
-class CreateNoteRequest(BaseModel):
-    fields: dict[str, str]
 
 
 @router.get("/notes", response_model_by_alias=False)
@@ -33,8 +28,14 @@ async def get_note(note_id: int, space_id: Annotated[str, Query()], app: AppDep,
 
 
 @router.post("/notes", response_model_by_alias=False)
-async def create_note(
-    request: CreateNoteRequest, space_id: Annotated[str, Query()], app: AppDep, session_id: SessionIdDep
-) -> Note:
+async def create_note(fields: dict[str, str], space_id: Annotated[str, Query()], app: AppDep, session_id: SessionIdDep) -> Note:
     """Create a new note in a space."""
-    return await app.create_note_from_raw_fields(session_id, space_id, request.fields)
+    return await app.create_note_from_raw_fields(session_id, space_id, fields)
+
+
+@router.put("/notes/{note_id}", response_model_by_alias=False)
+async def update_note(
+    note_id: int, fields: dict[str, str], space_id: Annotated[str, Query()], app: AppDep, session_id: SessionIdDep
+) -> Note:
+    """Update an existing note in a space."""
+    return await app.update_note_from_raw_fields(session_id, space_id, note_id, fields)

@@ -3,14 +3,8 @@ import { useEffect, useState } from "react"
 import { notesApi, type Note } from "../../lib/api"
 import { useSpacesStore } from "@/stores/spacesStore"
 import { formatFieldValue, formatDateTime } from "../../lib/formatters"
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { NoteBreadcrumb } from "./components/NoteBreadcrumb"
 import { Comments } from "./components/Comments"
 
 export default function NoteDetail() {
@@ -53,21 +47,14 @@ export default function NoteDetail() {
 
   return (
     <div>
-      <Breadcrumb className="my-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to={`/notes/${spaceId}`}>Notes / {space.name}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>Note #{note.id}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <NoteBreadcrumb spaceId={spaceId!} spaceName={space.name} currentPage={`Note #${note.id}`} showNoteAsLink={false} />
 
-      <h1 className="text-2xl font-bold my-4">Note #{note.id}</h1>
+      <div className="flex justify-between items-center my-4">
+        <h1 className="text-2xl font-bold">Note #{note.id}</h1>
+        <Button asChild>
+          <Link to={`/notes/${spaceId}/${noteId}/edit`}>Edit</Link>
+        </Button>
+      </div>
 
       <div className="bg-white border border-gray-300 rounded-lg p-6 mt-4">
         <div className="grid grid-cols-2 gap-4">

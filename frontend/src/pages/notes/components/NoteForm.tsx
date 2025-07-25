@@ -14,6 +14,8 @@ interface NoteFormProps {
   onSubmit: (fields: Record<string, string>) => void
   onCancel: () => void
   loading: boolean
+  initialValues?: Record<string, unknown>
+  mode?: "create" | "edit"
 }
 
 interface FieldWrapperProps {
@@ -40,7 +42,8 @@ const getInputComponent = (
   space: Space,
   register: UseFormRegister<Record<string, string>>,
   setValue: UseFormSetValue<Record<string, string>>,
-  error: FieldError | undefined
+  error: FieldError | undefined,
+  defaultValue: string
 ) => {
   const commonProps = {
     id: field.name,
@@ -56,14 +59,14 @@ const getInputComponent = (
         <Checkbox
           {...commonProps}
           onCheckedChange={checked => setValue(field.name, String(Boolean(checked)))}
-          defaultChecked={field.default === true}
+          defaultChecked={defaultValue === "true"}
         />
       )
 
     case "choice": {
       const choices = (field.options.values as string[]) || []
       return (
-        <Select onValueChange={value => setValue(field.name, value)}>
+        <Select onValueChange={value => setValue(field.name, value)} defaultValue={defaultValue}>
           <SelectTrigger className={error ? "border-red-500" : ""}>
             <SelectValue placeholder="Select an option..." />
           </SelectTrigger>
@@ -80,7 +83,7 @@ const getInputComponent = (
 
     case "user":
       return (
-        <Select onValueChange={value => setValue(field.name, value)}>
+        <Select onValueChange={value => setValue(field.name, value)} defaultValue={defaultValue}>
           <SelectTrigger className={error ? "border-red-500" : ""}>
             <SelectValue placeholder="Select a user..." />
           </SelectTrigger>
@@ -121,9 +124,10 @@ const getInputComponent = (
   }
 }
 
-export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) {
-  // Filter out hidden fields from create form
-  const visibleFields = space.fields.filter(field => !space.hidden_create_fields.includes(field.name))
+export function NoteForm({ space, onSubmit, onCancel, loading, initialValues = {}, mode = "create" }: NoteFormProps) {
+  // Filter out hidden fields from create form (only for create mode)
+  const visibleFields =
+    mode === "create" ? space.fields.filter(field => !space.hidden_create_fields.includes(field.name)) : space.fields
 
   // Create dynamic schema based on space fields
   const createSchema = () => {
@@ -161,6 +165,14 @@ export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) 
   const schema = createSchema()
   type FormData = Record<string, string>
 
+  const getDefaultValue = (field: SpaceField): string => {
+    if (initialValues && field.name in initialValues) {
+      const value = initialValues[field.name]
+      return value ? String(value) : ""
+    }
+    return field.default ? String(field.default) : ""
+  }
+
   const {
     register,
     handleSubmit,
@@ -168,7 +180,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) 
     setValue,
   } = useForm<FormData>({
     resolver: zodResolver(schema) as Resolver<FormData>,
-    defaultValues: Object.fromEntries(visibleFields.map(field => [field.name, field.default ? String(field.default) : ""])),
+    defaultValues: Object.fromEntries(visibleFields.map(field => [field.name, getDefaultValue(field)])),
   })
 
   const onFormSubmit = (data: FormData) => {
@@ -183,6 +195,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) 
 
   const renderField = (field: SpaceField) => {
     const error = errors[field.name as keyof FormData] as FieldError | undefined
+    const defaultValue = getDefaultValue(field)
     const helpText =
       field.type === "tags"
         ? "Separate multiple tags with commas"
@@ -192,7 +205,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) 
 
     return (
       <FieldWrapper key={field.name} field={field} error={error} helpText={helpText}>
-        {getInputComponent(field, space, register, setValue, error)}
+        {getInputComponent(field, space, register, setValue, error, defaultValue)}
       </FieldWrapper>
     )
   }
@@ -203,7 +216,7 @@ export function NoteForm({ space, onSubmit, onCancel, loading }: NoteFormProps) 
 
       <div className="flex space-x-3 pt-4">
         <Button type="submit" disabled={loading}>
-          {loading ? "Creating..." : "Create Note"}
+          {loading ? (mode === "edit" ? "Updating..." : "Creating...") : mode === "edit" ? "Update Note" : "Create Note"}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
           Cancel

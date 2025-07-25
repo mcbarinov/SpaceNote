@@ -36,10 +36,6 @@ export interface Filter {
   list_fields: string[]
 }
 
-export interface CreateNoteRequest {
-  fields: Record<string, string>
-}
-
 export const notesApi = {
   listNotes: async (
     spaceId: string,
@@ -65,10 +61,17 @@ export const notesApi = {
     return await api.get(`notes/${noteId}?${searchParams.toString()}`).json()
   },
 
-  createNote: async (spaceId: string, request: CreateNoteRequest): Promise<Note> => {
+  createNote: async (spaceId: string, fields: Record<string, string>): Promise<Note> => {
     const searchParams = new URLSearchParams()
     searchParams.set("space_id", spaceId)
 
-    return await api.post(`notes?${searchParams.toString()}`, { json: request }).json()
+    return await api.post(`notes?${searchParams.toString()}`, { json: fields }).json()
+  },
+
+  updateNote: async (spaceId: string, noteId: number, fields: Record<string, string>): Promise<Note> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set("space_id", spaceId)
+
+    return await api.put(`notes/${noteId}?${searchParams.toString()}`, { json: fields }).json()
   },
 }

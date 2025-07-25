@@ -1,16 +1,9 @@
-import { useParams, useNavigate, Link } from "react-router"
+import { useParams, useNavigate } from "react-router"
 import { useState } from "react"
 import { useSpacesStore } from "@/stores/spacesStore"
-import { notesApi, type CreateNoteRequest } from "@/lib/api/notes"
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from "@/components/ui/breadcrumb"
+import { notesApi } from "@/lib/api/notes"
 import { NoteForm } from "./components/NoteForm"
+import { NoteBreadcrumb } from "./components/NoteBreadcrumb"
 
 export default function CreateNote() {
   const { spaceId } = useParams<{ spaceId: string }>()
@@ -22,8 +15,7 @@ export default function CreateNote() {
     if (!spaceId) return
 
     setLoading(true)
-    const request: CreateNoteRequest = { fields }
-    const createdNote = await notesApi.createNote(spaceId, request)
+    const createdNote = await notesApi.createNote(spaceId, fields)
     navigate(`/notes/${spaceId}/${createdNote.id}`)
     setLoading(false)
   }
@@ -38,19 +30,7 @@ export default function CreateNote() {
 
   return (
     <div>
-      <Breadcrumb className="my-4">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to={`/notes/${spaceId}`}>Notes / {space.name}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>New Note</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+      <NoteBreadcrumb spaceId={spaceId!} spaceName={space.name} currentPage="New Note" />
 
       <h1 className="text-2xl font-bold my-4">Create New Note</h1>
 
