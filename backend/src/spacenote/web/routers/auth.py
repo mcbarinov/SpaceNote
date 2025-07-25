@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends, Request
+from multiprocessing import AuthenticationError
+
+from fastapi import APIRouter, Request
 from pydantic import BaseModel
 
-from spacenote.core.app import App
-from spacenote.core.user.models import SessionId
-from spacenote.web.class_based_view import cbv
-from spacenote.web.deps import get_app, get_session_id
+from spacenote.web.deps import AppDep, SessionIdDep
 
 router = APIRouter()
 
@@ -24,30 +23,21 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
-@cbv(router)
-class AuthApi:
-    """API endpoints for authentication."""
+@router.post("/auth/login")
+async def login(request: Request, login_data: LoginRequest, app: AppDep) -> LoginResponse:
+    """Authenticate user and create session."""
+    user_agent = request.headers.get("user-agent")
+    ip_address = request.client.host if request.client else None
 
-    app: App = Depends(get_app)
-    session_id: SessionId | None = Depends(get_session_id)
+    session_id = await app.login(login_data.username, login_data.password, user_agent, ip_address)
+    if not session_id:
+        raise AuthenticationError("Invalid username or password")
 
-    @router.post("/auth/login")
-    async def login(self, request: Request, login_data: LoginRequest) -> LoginResponse:
-        """Authenticate user and create session."""
-        user_agent = request.headers.get("user-agent")
-        ip_address = request.client.host if request.client else None
+    return LoginResponse(session_id=session_id, user_id=login_data.username)
 
-        session_id = await self.app.login(login_data.username, login_data.password, user_agent, ip_address)
-        if not session_id:
-            raise ValueError("Invalid username or password")
 
-        return LoginResponse(session_id=session_id, user_id=login_data.username)
-
-    @router.post("/auth/change-password")
-    async def change_password(self, data: ChangePasswordRequest) -> dict[str, str]:
-        """Change password for current user."""
-        if not self.session_id:
-            raise ValueError("Not authenticated")
-
-        await self.app.change_password(self.session_id, data.current_password, data.new_password)
-        return {"message": "Password changed successfully"}
+@router.post("/auth/change-password")
+async def change_password(data: ChangePasswordRequest, app: AppDep, session_id: SessionIdDep) -> dict[str, str]:
+    """Change password for current user."""
+    await app.change_password(session_id, data.current_password, data.new_password)
+    return {"message": "Password changed successfully"}

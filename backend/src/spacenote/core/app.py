@@ -35,6 +35,11 @@ class App:
         """Get user by session ID."""
         return await self._core.services.session.get_user_by_session(session_id)
 
+    async def is_session_valid(self, session_id: SessionId) -> bool:
+        """Check if session is valid and active."""
+        user = await self._core.services.session.get_user_by_session(session_id)
+        return user is not None
+
     async def login(
         self, username: str, password: str, user_agent: str | None = None, ip_address: str | None = None
     ) -> SessionId | None:
