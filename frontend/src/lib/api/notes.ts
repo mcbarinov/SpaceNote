@@ -53,4 +53,11 @@ export const notesApi = {
 
     return await api.get(`notes?${searchParams.toString()}`).json()
   },
+
+  getNote: async (spaceId: string, noteId: number): Promise<Note> => {
+    const searchParams = new URLSearchParams()
+    searchParams.set("space_id", spaceId)
+
+    return await api.get(`notes/${noteId}?${searchParams.toString()}`).json()
+  },
 }

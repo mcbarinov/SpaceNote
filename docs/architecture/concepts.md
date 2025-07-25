@@ -80,6 +80,16 @@ Fields define the data structure within a space.
 - Type-specific constraints (min/max, allowed values)
 - Display order for UI rendering
 
+**Schema Evolution:**
+SpaceNote supports dynamic schema evolution, meaning spaces can evolve their field definitions over time:
+
+- **Adding fields**: New fields can be added to a space at any time
+- **Missing field values**: Notes may not have values for all fields defined in the current space schema
+- **Backward compatibility**: Old notes remain valid even when new fields are added to the space
+- **UI handling**: The interface displays all current fields for every note, showing empty/default values for missing fields
+
+This design allows spaces to grow organically - you can start simple and add more structure as your needs evolve, without breaking existing content.
+
 ### Filters
 
 Filters provide custom views of notes within a space.
