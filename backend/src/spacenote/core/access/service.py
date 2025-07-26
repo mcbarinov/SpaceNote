@@ -11,12 +11,15 @@ class AccessService(Service):
             raise AuthenticationError("Invalid or expired session")
         return user
 
-    def ensure_space_member(self, space_id: str, member: str) -> None:
+    async def ensure_space_member(self, session_id: SessionId, space_id: str) -> None:
+        """Ensure the authenticated user is a member of the specified space."""
+        user = await self.get_authenticated_user(session_id)
         space = self.core.services.space.get_space(space_id)
-        if member not in space.members:
-            raise AccessDeniedError(f"Access denied: user '{member}' is not a member of space '{space_id}'")
+        if user.id not in space.members:
+            raise AccessDeniedError(f"Access denied: user '{user.id}' is not a member of space '{space_id}'")
 
-    def ensure_admin(self, user_id: str) -> None:
-        """Ensure the user is admin, raise AccessDeniedError if not."""
-        if user_id != "admin":
+    async def ensure_admin(self, session_id: SessionId) -> None:
+        """Ensure the authenticated user is admin, raise AccessDeniedError if not."""
+        user = await self.get_authenticated_user(session_id)
+        if user.id != "admin":
             raise AccessDeniedError("Admin privileges required")
