@@ -1,5 +1,6 @@
 import { useSpacesStore } from "@/stores/spacesStore"
 import { Card } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Check, X } from "lucide-react"
 import { useDialog } from "@/lib/dialog"
@@ -20,42 +21,40 @@ export default function SpacesPage() {
       </div>
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-4">ID</th>
-                <th className="text-left p-4">Name</th>
-                <th className="text-center p-4">Members</th>
-                <th className="text-center p-4">Fields</th>
-                <th className="text-center p-4">Filters</th>
-                <th className="text-center p-4">Telegram</th>
-              </tr>
-            </thead>
-            <tbody>
-              {spaces.map(space => (
-                <tr key={space.id} className="border-b hover:bg-gray-50">
-                  <td className="p-4 font-mono text-sm">{space.id}</td>
-                  <td className="p-4">{space.name}</td>
-                  <td className="p-4 text-center">{space.members.length}</td>
-                  <td className="p-4 text-center">
-                    <Link to={`/spaces/${space.id}/fields`} className="text-blue-600 hover:text-blue-800 hover:underline">
-                      {space.fields.length}
-                    </Link>
-                  </td>
-                  <td className="p-4 text-center">{space.filters.length}</td>
-                  <td className="p-4 text-center">
-                    {space.telegram?.enabled ? (
-                      <Check className="w-4 h-4 text-green-600 mx-auto" />
-                    ) : (
-                      <X className="w-4 h-4 text-gray-400 mx-auto" />
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead className="text-center">Members</TableHead>
+              <TableHead className="text-center">Fields</TableHead>
+              <TableHead className="text-center">Filters</TableHead>
+              <TableHead className="text-center">Telegram</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {spaces.map(space => (
+              <TableRow key={space.id}>
+                <TableCell className="font-mono text-sm">{space.id}</TableCell>
+                <TableCell>{space.name}</TableCell>
+                <TableCell className="text-center">{space.members.length}</TableCell>
+                <TableCell className="text-center">
+                  <Link to={`/spaces/${space.id}/fields`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                    {space.fields.length}
+                  </Link>
+                </TableCell>
+                <TableCell className="text-center">{space.filters.length}</TableCell>
+                <TableCell className="text-center">
+                  {space.telegram?.enabled ? (
+                    <Check className="w-4 h-4 text-green-600 mx-auto" />
+                  ) : (
+                    <X className="w-4 h-4 text-gray-400 mx-auto" />
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   )

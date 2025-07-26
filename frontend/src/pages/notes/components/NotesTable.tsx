@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import type { Note } from "@/lib/api/notes"
 import type { Space } from "@/lib/api/spaces"
 import { formatFieldValue, formatDateOnly } from "@/lib/formatters"
@@ -17,19 +18,17 @@ export function NotesTable({ notes, listFields, space }: NotesTableProps) {
   const fieldsToShow = listFields.length === 0 ? ["id", "author", "created_at"] : listFields
 
   return (
-    <table className="w-full border-collapse border border-gray-300">
-      <thead>
-        <tr className="bg-gray-50">
+    <Table>
+      <TableHeader>
+        <TableRow>
           {fieldsToShow.map(field => (
-            <th key={field} className="border border-gray-300 px-4 py-2 text-left">
-              {field}
-            </th>
+            <TableHead key={field}>{field}</TableHead>
           ))}
-        </tr>
-      </thead>
-      <tbody>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {notes.map(note => (
-          <tr key={note.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/notes/${spaceId}/${note.id}`)}>
+          <TableRow key={note.id} className="cursor-pointer" onClick={() => navigate(`/notes/${spaceId}/${note.id}`)}>
             {fieldsToShow.map(field => {
               const fieldDef = space.fields.find(f => f.name === field)
               let cellContent
@@ -46,15 +45,11 @@ export function NotesTable({ notes, listFields, space }: NotesTableProps) {
                 cellContent = formatFieldValue(note.fields[field])
               }
 
-              return (
-                <td key={field} className="border border-gray-300 px-4 py-2">
-                  {cellContent}
-                </td>
-              )
+              return <TableCell key={field}>{cellContent}</TableCell>
             })}
-          </tr>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
