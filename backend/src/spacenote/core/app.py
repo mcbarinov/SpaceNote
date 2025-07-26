@@ -96,6 +96,16 @@ class App:
         self._core.services.access.ensure_space_member(space_id, current_user.id)
         await self._core.services.space.update_hidden_create_fields(space_id, field_names)
 
+    async def update_note_detail_template(self, session_id: SessionId, space_id: str, template: str | None) -> None:
+        current_user = await self._core.services.access.get_authenticated_user(session_id)
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        await self._core.services.space.update_note_detail_template(space_id, template)
+
+    async def update_note_list_template(self, session_id: SessionId, space_id: str, template: str | None) -> None:
+        current_user = await self._core.services.access.get_authenticated_user(session_id)
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
+        await self._core.services.space.update_note_list_template(space_id, template)
+
     async def add_filter(self, session_id: SessionId, space_id: str, filter: Filter) -> None:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
         self._core.services.access.ensure_space_member(space_id, current_user.id)

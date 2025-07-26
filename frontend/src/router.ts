@@ -8,6 +8,7 @@ import EditNote from "./pages/notes/EditNote"
 import NoteDetail from "./pages/notes/NoteDetail"
 import SpacesPage from "./pages/spaces"
 import SpaceFields from "./pages/spaces/SpaceFields"
+import SpaceTemplates from "./pages/spaces/SpaceTemplates"
 import { requireAuth } from "./lib/auth"
 
 export const router = createBrowserRouter([
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
       {
         path: "spaces/:spaceId/fields",
         Component: SpaceFields,
+      },
+      {
+        path: "spaces/:spaceId/templates",
+        Component: SpaceTemplates,
       },
       {
         path: "notes/:spaceId",

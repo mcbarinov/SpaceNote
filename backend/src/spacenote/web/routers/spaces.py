@@ -16,6 +16,14 @@ class UpdateFieldsRequest(BaseModel):
     field_names: list[str]
 
 
+class UpdateDetailTemplateRequest(BaseModel):
+    template: str | None
+
+
+class UpdateListTemplateRequest(BaseModel):
+    template: str | None
+
+
 @router.get("/spaces", response_model_by_alias=False)
 async def list_spaces(app: AppDep, session_id: SessionIdDep) -> list[Space]:
     return await app.get_spaces_by_member(session_id)
@@ -43,3 +51,19 @@ async def update_list_fields(space_id: str, request: UpdateFieldsRequest, app: A
 async def update_hidden_create_fields(space_id: str, request: UpdateFieldsRequest, app: AppDep, session_id: SessionIdDep) -> None:
     """Update which fields are hidden in the create form."""
     await app.update_hidden_create_fields(session_id, space_id, request.field_names)
+
+
+@router.put("/spaces/{space_id}/note-detail-template")
+async def update_note_detail_template(
+    space_id: str, request: UpdateDetailTemplateRequest, app: AppDep, session_id: SessionIdDep
+) -> None:
+    """Update note detail template for customizing individual note display."""
+    await app.update_note_detail_template(session_id, space_id, request.template)
+
+
+@router.put("/spaces/{space_id}/note-list-template")
+async def update_note_list_template(
+    space_id: str, request: UpdateListTemplateRequest, app: AppDep, session_id: SessionIdDep
+) -> None:
+    """Update note list template for customizing note list items."""
+    await app.update_note_list_template(session_id, space_id, request.template)

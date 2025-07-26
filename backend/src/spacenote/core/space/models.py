@@ -17,6 +17,8 @@ class Space(MongoModel):
     default_page_size: int = 20  # Default number of records per page
     max_page_size: int = 100  # Maximum allowed page size
     telegram: TelegramConfig | None = None  # Optional Telegram configuration
+    note_detail_template: str | None = None  # Liquid template for customizing note detail view
+    note_list_template: str | None = None  # Liquid template for customizing note list items
 
     def get_field(self, field_name: str) -> SpaceField | None:
         """Get field definition by name."""

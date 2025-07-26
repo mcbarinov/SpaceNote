@@ -1,8 +1,9 @@
-import { useParams } from "react-router"
+import { useParams, Link } from "react-router"
 import { useSpacesStore } from "@/stores/spacesStore"
 import { FieldsTable } from "./components/FieldsTable"
 import { ListFieldsConfig } from "./components/ListFieldsConfig"
 import { HiddenFieldsConfig } from "./components/HiddenFieldsConfig"
+import { Button } from "@/components/ui/button"
 
 export default function SpaceFields() {
   const { spaceId } = useParams<{ spaceId: string }>()
@@ -16,6 +17,9 @@ export default function SpaceFields() {
     <div>
       <div className="flex justify-between items-center my-4">
         <h1 className="text-2xl font-bold">Fields / {space.name}</h1>
+        <Button asChild variant="outline">
+          <Link to={`/spaces/${spaceId}/templates`}>Templates</Link>
+        </Button>
       </div>
 
       <FieldsTable fields={space.fields} />

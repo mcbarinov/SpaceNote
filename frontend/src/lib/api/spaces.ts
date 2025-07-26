@@ -41,6 +41,8 @@ export interface Space {
   default_page_size: number
   max_page_size: number
   telegram?: TelegramConfig
+  note_detail_template?: string
+  note_list_template?: string
 }
 
 export interface CreateSpaceRequest {
@@ -67,5 +69,13 @@ export const spacesApi = {
 
   updateHiddenCreateFields: async (spaceId: string, fieldNames: string[]): Promise<void> => {
     await api.put(`spaces/${spaceId}/hidden-create-fields`, { json: { field_names: fieldNames } })
+  },
+
+  updateNoteDetailTemplate: async (spaceId: string, template: string | null): Promise<void> => {
+    await api.put(`spaces/${spaceId}/note-detail-template`, { json: { template } })
+  },
+
+  updateNoteListTemplate: async (spaceId: string, template: string | null): Promise<void> => {
+    await api.put(`spaces/${spaceId}/note-list-template`, { json: { template } })
   },
 }

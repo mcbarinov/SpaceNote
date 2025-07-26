@@ -125,6 +125,20 @@ class SpaceService(Service):
         await self.update_cache(space_id)
         return self.get_space(space_id)
 
+    async def update_note_detail_template(self, space_id: str, template: str | None) -> None:
+        """Update note detail template for customizing individual note display."""
+        self.get_space(space_id)  # Ensure space exists
+
+        await self._collection.update_one({"_id": space_id}, {"$set": {"note_detail_template": template}})
+        await self.update_cache(space_id)
+
+    async def update_note_list_template(self, space_id: str, template: str | None) -> None:
+        """Update note list template for customizing note list items."""
+        self.get_space(space_id)  # Ensure space exists
+
+        await self._collection.update_one({"_id": space_id}, {"$set": {"note_list_template": template}})
+        await self.update_cache(space_id)
+
     async def add_filter(self, space_id: str, filter: Filter) -> Space:
         """Add a new filter to space."""
         space = self.get_space(space_id)
