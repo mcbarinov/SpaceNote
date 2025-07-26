@@ -1,8 +1,9 @@
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel
 
+from spacenote.core.export.models import ImportResult
 from spacenote.core.filter.models import Filter
 from spacenote.core.space.models import Space
 from spacenote.web.deps import AppDep, SessionIdDep
@@ -74,3 +75,17 @@ async def create_filter(space_id: str, filter: Filter, app: AppDep, session_id: 
 async def delete_filter(space_id: str, filter_id: str, app: AppDep, session_id: SessionIdDep) -> None:
     """Delete a filter from the space."""
     await app.delete_filter(session_id, space_id, filter_id)
+
+
+@router.get("/spaces/{space_id}/export")
+async def export_space(
+    space_id: str, app: AppDep, session_id: SessionIdDep, include_content: Annotated[bool, Query()] = False
+) -> dict[str, Any]:
+    """Export a space as JSON. Set include_content=true to include notes and comments."""
+    return await app.export_space_as_json(session_id, space_id, include_content)
+
+
+@router.post("/import", response_model_by_alias=False)
+async def import_space(app: AppDep, session_id: SessionIdDep, data: dict[str, Any]) -> ImportResult:
+    """Import a space from JSON data."""
+    return await app.import_space_from_json(session_id, data)

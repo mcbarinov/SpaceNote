@@ -145,14 +145,13 @@ class App:
 
     async def export_space_as_json(self, session_id: SessionId, space_id: str, include_content: bool = False) -> dict[str, Any]:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
-        self._core.services.access.ensure_admin(current_user.id)
+        self._core.services.access.ensure_space_member(space_id, current_user.id)
         if not self._core.services.space.space_exists(space_id):
             raise ValidationError(f"Space '{space_id}' does not exist.")
         return await self._core.services.export.export_space(space_id, include_content)
 
     async def import_space_from_json(self, session_id: SessionId, data: dict[str, Any]) -> ImportResult:
         current_user = await self._core.services.access.get_authenticated_user(session_id)
-        self._core.services.access.ensure_admin(current_user.id)
         return await self._core.services.export.import_space(data, current_user.id)
 
     async def create_comment(self, session_id: SessionId, space_id: str, note_id: int, content: str) -> Comment:

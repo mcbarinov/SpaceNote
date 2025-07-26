@@ -50,6 +50,13 @@ export interface CreateSpaceRequest {
   name: string
 }
 
+export interface ImportResult {
+  space_id: string
+  notes_imported: number
+  comments_imported: number
+  warnings: string[]
+}
+
 export const spacesApi = {
   listSpaces: async (): Promise<Space[]> => {
     return await api.get("spaces").json()
@@ -85,5 +92,17 @@ export const spacesApi = {
 
   deleteFilter: async (spaceId: string, filterId: string): Promise<void> => {
     await api.delete(`spaces/${spaceId}/filters/${filterId}`)
+  },
+
+  exportSpace: async (spaceId: string, includeContent: boolean = false): Promise<unknown> => {
+    return await api
+      .get(`spaces/${spaceId}/export`, {
+        searchParams: { include_content: includeContent.toString() },
+      })
+      .json()
+  },
+
+  importSpace: async (data: unknown): Promise<ImportResult> => {
+    return await api.post("import", { json: data }).json()
   },
 }
