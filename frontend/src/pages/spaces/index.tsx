@@ -43,7 +43,11 @@ export default function SpacesPage() {
                     {space.fields.length}
                   </Link>
                 </TableCell>
-                <TableCell className="text-center">{space.filters.length}</TableCell>
+                <TableCell className="text-center">
+                  <Link to={`/spaces/${space.id}/filters`} className="text-blue-600 hover:text-blue-800 hover:underline">
+                    {space.filters.length}
+                  </Link>
+                </TableCell>
                 <TableCell className="text-center">
                   {space.telegram?.enabled ? (
                     <Check className="w-4 h-4 text-green-600 mx-auto" />

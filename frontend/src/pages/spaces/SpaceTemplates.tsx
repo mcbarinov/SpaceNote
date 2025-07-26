@@ -235,7 +235,10 @@ export default function SpaceTemplates() {
             Validate All Templates
           </Button>
           <Button variant="outline" asChild>
-            <Link to={`/spaces/${spaceId}/fields`}>Back to Fields</Link>
+            <Link to={`/spaces/${spaceId}/fields`}>Fields</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link to={`/spaces/${spaceId}/filters`}>Filters</Link>
           </Button>
         </div>
       </div>

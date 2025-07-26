@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Body
 from pydantic import BaseModel
 
+from spacenote.core.filter.models import Filter
 from spacenote.core.space.models import Space
 from spacenote.web.deps import AppDep, SessionIdDep
 
@@ -61,3 +62,15 @@ async def update_note_list_template(
 ) -> None:
     """Update note list template for customizing note list items."""
     await app.update_note_list_template(session_id, space_id, template)
+
+
+@router.post("/spaces/{space_id}/filters")
+async def create_filter(space_id: str, filter: Filter, app: AppDep, session_id: SessionIdDep) -> None:
+    """Create a new filter for the space."""
+    await app.add_filter(session_id, space_id, filter)
+
+
+@router.delete("/spaces/{space_id}/filters/{filter_id}")
+async def delete_filter(space_id: str, filter_id: str, app: AppDep, session_id: SessionIdDep) -> None:
+    """Delete a filter from the space."""
+    await app.delete_filter(session_id, space_id, filter_id)

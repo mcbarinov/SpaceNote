@@ -40,4 +40,4 @@ class Filter(BaseModel):
     description: str = ""  # optional description/comment
     conditions: list[FilterCondition]  # filter conditions
     sort: list[str] = []  # ["name", "-created_at", "priority"]
-    list_fields: list[str] = []  # additional columns to display (id, author, created_at always shown)
+    list_fields: list[str] = []  # columns to display

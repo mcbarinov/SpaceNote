@@ -78,4 +78,12 @@ export const spacesApi = {
   updateNoteListTemplate: async (spaceId: string, template: string | null): Promise<void> => {
     await api.put(`spaces/${spaceId}/note-list-template`, { json: { template } })
   },
+
+  createFilter: async (spaceId: string, filter: Filter): Promise<void> => {
+    await api.post(`spaces/${spaceId}/filters`, { json: filter })
+  },
+
+  deleteFilter: async (spaceId: string, filterId: string): Promise<void> => {
+    await api.delete(`spaces/${spaceId}/filters/${filterId}`)
+  },
 }
