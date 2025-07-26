@@ -158,6 +158,47 @@ When writing web route handlers:
 - Services will raise appropriate exceptions that FastAPI will handle
 - Follow minimalism principle during prototyping phase
 
+## API Request Model Guidelines
+
+**CRITICAL RULE**: Never create Pydantic models for single-field requests.
+
+For single-field requests, use `Body(embed=True)` with proper type annotations:
+
+**✅ Correct (single field):**
+```python
+from typing import Annotated
+from fastapi import Body
+
+@router.put("/items/{item_id}/name")
+async def update_name(
+    item_id: str, 
+    app: AppDep, 
+    session_id: SessionIdDep, 
+    name: Annotated[str, Body(embed=True)]
+) -> None:
+    await app.update_item_name(session_id, item_id, name)
+```
+
+**❌ Forbidden (unnecessary model):**
+```python
+class UpdateNameRequest(BaseModel):
+    name: str
+
+@router.put("/items/{item_id}/name")
+async def update_name(item_id: str, request: UpdateNameRequest, ...) -> None:
+    await app.update_item_name(session_id, item_id, request.name)
+```
+
+**When to use Pydantic models:**
+- Multiple fields: 2+ fields in request body
+- Complex validation: Custom validators or field constraints
+- Reusable structures: Used across multiple endpoints
+
+**Request parameter order:**
+1. Path parameters (`item_id: str`)
+2. Dependencies (`app: AppDep`, `session_id: SessionIdDep`)
+3. Body parameters with defaults (`name: Annotated[str, Body(embed=True)]`)
+
 ## Service Access Guidelines
 
 **CRITICAL RULE**: Services can ONLY be accessed through `core.services.*` objects:

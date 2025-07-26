@@ -1,4 +1,6 @@
-from fastapi import APIRouter
+from typing import Annotated
+
+from fastapi import APIRouter, Body
 from pydantic import BaseModel
 
 from spacenote.core.space.models import Space
@@ -14,14 +16,6 @@ class CreateSpaceRequest(BaseModel):
 
 class UpdateFieldsRequest(BaseModel):
     field_names: list[str]
-
-
-class UpdateDetailTemplateRequest(BaseModel):
-    template: str | None
-
-
-class UpdateListTemplateRequest(BaseModel):
-    template: str | None
 
 
 @router.get("/spaces", response_model_by_alias=False)
@@ -55,15 +49,15 @@ async def update_hidden_create_fields(space_id: str, request: UpdateFieldsReques
 
 @router.put("/spaces/{space_id}/note-detail-template")
 async def update_note_detail_template(
-    space_id: str, request: UpdateDetailTemplateRequest, app: AppDep, session_id: SessionIdDep
+    space_id: str, app: AppDep, session_id: SessionIdDep, template: Annotated[str | None, Body(embed=True)]
 ) -> None:
     """Update note detail template for customizing individual note display."""
-    await app.update_note_detail_template(session_id, space_id, request.template)
+    await app.update_note_detail_template(session_id, space_id, template)
 
 
 @router.put("/spaces/{space_id}/note-list-template")
 async def update_note_list_template(
-    space_id: str, request: UpdateListTemplateRequest, app: AppDep, session_id: SessionIdDep
+    space_id: str, app: AppDep, session_id: SessionIdDep, template: Annotated[str | None, Body(embed=True)]
 ) -> None:
     """Update note list template for customizing note list items."""
-    await app.update_note_list_template(session_id, space_id, request.template)
+    await app.update_note_list_template(session_id, space_id, template)
