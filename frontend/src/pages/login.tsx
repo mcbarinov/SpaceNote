@@ -1,59 +1,83 @@
-import { useActionState } from "react"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { useNavigate } from "react-router"
 import { authApi } from "../lib/api"
 import { useAuthStore } from "../stores/authStore"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Card, CardContent } from "../components/ui/card"
+import { Form, FormControl, FormField, FormItem, FormMessage } from "../components/ui/form"
 
-interface LoginState {
-  error?: string
-}
+const formSchema = z.object({
+  username: z.string().min(1, "Please enter username"),
+  password: z.string().min(1, "Please enter password"),
+})
 
 export default function LoginPage() {
   const navigate = useNavigate()
   const login = useAuthStore(state => state.login)
+  const [loginError, setLoginError] = useState<string>()
 
-  async function loginAction(_prevState: LoginState, formData: FormData): Promise<LoginState> {
-    const username = formData.get("username") as string
-    const password = formData.get("password") as string
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+    },
+  })
 
-    if (!username || !password) {
-      return { error: "Please enter username and password" }
-    }
-
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+    setLoginError(undefined)
     try {
-      const response = await authApi.login({ username, password })
+      const response = await authApi.login(data)
       login(response.session_id, response.user_id)
       navigate("/")
-      return {}
     } catch (_error) {
-      return { error: "Invalid username or password" }
+      setLoginError("Invalid username or password")
     }
   }
-
-  const [state, formAction, isPending] = useActionState(loginAction, {})
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <Card className="w-full max-w-md">
         <CardContent>
-          <form action={formAction} className="space-y-4">
-            <Input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="Enter username"
-              required
-              autoFocus
-              disabled={isPending}
-            />
-            <Input id="password" name="password" type="password" placeholder="Enter password" required disabled={isPending} />
-            {state.error && <p className="text-sm text-red-600">{state.error}</p>}
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Logging in..." : "Login"}
-            </Button>
-          </form>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} placeholder="Enter username" autoFocus disabled={form.formState.isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input {...field} type="password" placeholder="Enter password" disabled={form.formState.isSubmitting} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {loginError && <p className="text-sm text-red-600">{loginError}</p>}
+
+              <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Logging in..." : "Login"}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
       </Card>
     </div>

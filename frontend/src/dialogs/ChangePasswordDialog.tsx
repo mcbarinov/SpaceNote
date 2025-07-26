@@ -1,98 +1,112 @@
-import { useState } from "react"
-import type { FormEvent } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import type { BaseDialogProps } from "@/lib/dialog"
 import { authApi } from "@/lib/api/auth"
 import { toast } from "sonner"
 
+const formSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Current password is required"),
+    newPassword: z.string().min(1, "New password is required"),
+    confirmPassword: z.string().min(1, "Password confirmation is required"),
+  })
+  .refine(data => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
 export function ChangePasswordDialog({ onClose, onSuccess }: BaseDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [clientError, setClientError] = useState<string>()
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  })
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-
-    const formData = new FormData(e.currentTarget)
-    const currentPassword = formData.get("currentPassword") as string
-    const newPassword = formData.get("newPassword") as string
-    const confirmPassword = formData.get("confirmPassword") as string
-
-    if (newPassword !== confirmPassword) {
-      setClientError("Passwords do not match")
-      return
-    }
-
-    setIsSubmitting(true)
-    setClientError(undefined)
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
     await authApi.changePassword({
-      currentPassword,
-      newPassword,
+      currentPassword: data.currentPassword,
+      newPassword: data.newPassword,
     })
     toast.success("Password changed successfully")
     onSuccess?.("Password changed successfully")
     onClose()
-    setIsSubmitting(false)
   }
 
   return (
-    <Dialog open onOpenChange={() => !isSubmitting && onClose()}>
+    <Dialog open onOpenChange={() => !form.formState.isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Change Password</DialogTitle>
           <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
               name="currentPassword"
-              type="password"
-              placeholder="Enter current password"
-              required
-              disabled={isSubmitting}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type="password"
+                      placeholder="Enter current password"
+                      disabled={form.formState.isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
+            <FormField
+              control={form.control}
               name="newPassword"
-              type="password"
-              placeholder="Enter new password"
-              required
-              disabled={isSubmitting}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>New Password</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="password" placeholder="Enter new password" disabled={form.formState.isSubmitting} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
+            <FormField
+              control={form.control}
               name="confirmPassword"
-              type="password"
-              placeholder="Confirm new password"
-              required
-              disabled={isSubmitting}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Confirm New Password</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="password" placeholder="Confirm new password" disabled={form.formState.isSubmitting} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
 
-          {clientError && <p className="text-sm text-red-600">{clientError}</p>}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Changing..." : "Change Password"}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={form.formState.isSubmitting}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Changing..." : "Change Password"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )
